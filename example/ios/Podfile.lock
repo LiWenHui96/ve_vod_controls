@@ -1,0 +1,83 @@
+PODS:
+  - Flutter (1.0.0)
+  - integration_test (0.0.1):
+    - Flutter
+  - RangersAppLog/Core (6.16.8):
+    - RangersAppLog/Encryptor/VOLC
+  - RangersAppLog/Encryptor/VOLC (6.16.8)
+  - RangersAppLog/Host/CN (6.16.8):
+    - RangersAppLog/Core
+  - TTSDKFramework/BMF (1.42.3.4-standard):
+    - TTSDKFramework/Core
+  - TTSDKFramework/Core (1.42.3.4-standard):
+    - RangersAppLog/Core (~> 6.16.2)
+    - RangersAppLog/Host/CN (~> 6.16.2)
+  - TTSDKFramework/HttpDNS (1.42.3.4-standard)
+  - TTSDKFramework/Player (1.42.3.4-standard):
+    - TTSDKFramework/Core
+    - TTSDKFramework/HttpDNS
+    - TTSDKFramework/PlayerCore
+    - TTSDKFramework/Reachability
+    - TTSDKFramework/TopSignature
+    - TTSDKFramework/VCN
+    - TTSDKFramework/VolcLog
+  - TTSDKFramework/Player-SR (1.42.3.4-standard):
+    - TTSDKFramework/BMF
+    - TTSDKFramework/Player
+  - TTSDKFramework/PlayerCore (1.42.3.4-standard):
+    - TTSDKFramework/Core
+    - TTSDKFramework/Tools
+    - TTSDKFramework/TTFFmpeg
+    - TTSDKFramework/VideoProcessor
+  - TTSDKFramework/Reachability (1.42.3.4-standard)
+  - TTSDKFramework/SSL (1.42.3.4-standard)
+  - TTSDKFramework/Tools (1.42.3.4-standard):
+    - TTSDKFramework/SSL
+  - TTSDKFramework/TopSignature (1.42.3.4-standard)
+  - TTSDKFramework/TTFFmpeg (1.42.3.4-standard):
+    - TTSDKFramework/Tools
+  - TTSDKFramework/VCN (1.42.3.4-standard)
+  - TTSDKFramework/VideoProcessor (1.42.3.4-standard)
+  - TTSDKFramework/VolcLog (1.42.3.4-standard):
+    - TTSDKFramework/SSL
+  - ve_vod (0.0.1):
+    - Flutter
+    - ve_vod/standard (= 0.0.1)
+  - ve_vod/standard (0.0.1):
+    - Flutter
+    - TTSDKFramework/Player-SR (= 1.42.3.4-standard)
+  - ve_vod_controls (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - Flutter (from `Flutter`)
+  - integration_test (from `.symlinks/plugins/integration_test/ios`)
+  - ve_vod (from `.symlinks/plugins/ve_vod/ios`)
+  - ve_vod_controls (from `.symlinks/plugins/ve_vod_controls/ios`)
+
+SPEC REPOS:
+  https://github.com/volcengine/volcengine-specs.git:
+    - RangersAppLog
+    - TTSDKFramework
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: Flutter
+  integration_test:
+    :path: ".symlinks/plugins/integration_test/ios"
+  ve_vod:
+    :path: ".symlinks/plugins/ve_vod/ios"
+  ve_vod_controls:
+    :path: ".symlinks/plugins/ve_vod_controls/ios"
+
+SPEC CHECKSUMS:
+  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  integration_test: 13825b8a9334a850581300559b8839134b124670
+  RangersAppLog: fc413574b0f9ea2371d45952cbf81403a8387cb8
+  TTSDKFramework: 456de25643cf5b257549be3c8aa6b8ce18d6bdcf
+  ve_vod: 1589015b8f08bae559fc56010f4f25ceba8a12e9
+  ve_vod_controls: e86dcadea4540877e9aaa609919fc3de754da4c3
+
+PODFILE CHECKSUM: 96174f8cf4674f6f2ade6b6b7a1e7abf78705ab6
+
+COCOAPODS: 1.15.2

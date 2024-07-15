@@ -1,0 +1,29 @@
+name: ve_vod_controls_example
+description: "Demonstrates how to use the ve_vod_controls plugin."
+
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 0.0.1+1
+
+environment:
+  sdk: '>=3.3.4 <4.0.0'
+
+dependencies:
+  cupertino_icons: ^1.0.8
+  flutter:
+    sdk: flutter
+  ve_vod_controls:
+    path: ../
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+ve_vod:
+  sub_spec: standard
