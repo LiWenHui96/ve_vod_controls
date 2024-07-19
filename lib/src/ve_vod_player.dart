@@ -36,7 +36,7 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
 
   @override
   void didUpdateWidget(covariant VeVodPlayer oldWidget) {
-    if (oldWidget.controller != widget.controller) {
+    if (oldWidget.controller.uniqueId != widget.controller.uniqueId) {
       oldWidget.controller.dispose();
 
       _fullScreenListener?.cancel();
@@ -158,6 +158,9 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
   /// 播放源
   final TTVideoEngineMediaSource source;
+
+  /// 播放源ID
+  String? get uniqueId => source.getUniqueId;
 
   /// 视频播放器[VeVodPlayer]配置
   final VeVodPlayerConfig config;
