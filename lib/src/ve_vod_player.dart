@@ -122,7 +122,7 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
       return VisibilityDetector(
         key: Key('Ve_Vod_Player_Visible_$hashCode'),
         onVisibilityChanged: (VisibilityInfo info) {
-          if (!mounted) return;
+          if (!mounted || controller.value.isFullScreen) return;
 
           if (info.visibleFraction < .5 && controller.value.isPlaying) {
             controller.pause();
