@@ -16,8 +16,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  marquee: ^2.2.3
   plugin_platform_interface: ^2.1.8
-  ve_vod: ^1.42.3-1
+  provider: ^6.1.2
+  screen_brightness: ^1.0.1
+  ve_vod: 1.42.3-1
+  wakelock_plus: ^1.2.5
 
 dev_dependencies:
   flutter_lints: ^4.0.0
