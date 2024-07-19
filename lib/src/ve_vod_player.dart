@@ -24,6 +24,9 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
   /// 监控全屏的状态变化
   StreamSubscription<bool>? _fullScreenListener;
 
+  /// 是否自动播放、暂停播放视频 - 可视性
+  bool isAutoPlayByVisible = false;
+
   @override
   void initState() {
     WidgetsBinding.instance.addObserver(this);
@@ -99,7 +102,7 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    final Widget child = SizedBox(
       width: config.width,
       height: config.height,
       child: LayoutBuilder(
@@ -114,6 +117,26 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
         },
       ),
     );
+
+    if (config.allowedVisible) {
+      return VisibilityDetector(
+        key: Key('Ve_Vod_Player_Visible_$hashCode'),
+        onVisibilityChanged: (VisibilityInfo info) {
+          if (!mounted) return;
+
+          if (info.visibleFraction < .5 && controller.value.isPlaying) {
+            controller.pause();
+            isAutoPlayByVisible = true;
+          } else if (info.visibleFraction > .9 && isAutoPlayByVisible) {
+            controller.play();
+            isAutoPlayByVisible = false;
+          }
+        },
+        child: child,
+      );
+    }
+
+    return child;
   }
 
   VeVodPlayerInherited get _buildVideo {

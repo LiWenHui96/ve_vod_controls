@@ -27,6 +27,7 @@ class VeVodPlayerConfig {
     this.panEnabled = false,
     this.scaleEnabled = false,
     this.allowedScreenSleep = true,
+    this.allowedVisible = true,
     this.autoInitialize = false,
     this.autoPlay = false,
     this.startAt,
@@ -73,6 +74,9 @@ class VeVodPlayerConfig {
   ///
   /// 默认为true
   final bool allowedScreenSleep;
+
+  /// 是否开启可视性控制
+  final bool allowedVisible;
 
   /// 是否在启动时初始化视频，这将为播放的视频做准备
   ///
