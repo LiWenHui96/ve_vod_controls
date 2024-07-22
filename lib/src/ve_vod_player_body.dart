@@ -41,7 +41,7 @@ class VeVodPlayerBody extends StatelessWidget {
               alignment: Alignment.center,
               children: <Widget>[
                 if (child != null) child,
-                ...?config.overlayBuilder?.call(value),
+                ...?config.overlayBuilder?.call(context, controller, value),
               ],
             );
           },
@@ -69,16 +69,17 @@ class VeVodPlayerBody extends StatelessWidget {
 
         /// 控制器
         if (config.hasControls) {
-          final Widget child = VeVodPlayerSafeArea(
-            size: Size(width, height),
-            child: Selector<VeVodPlayerController, VeVodPlayerValue>(
-              builder: (BuildContext context, VeVodPlayerValue value, _) {
-                return VeVodPlayerControls.structure(controller, value: value);
-              },
-              selector: (_, __) => __.value,
-            ),
+          final Widget c = Selector<VeVodPlayerController, VeVodPlayerValue>(
+            builder: (BuildContext context, VeVodPlayerValue value, _) {
+              return VeVodPlayerControls.structure(
+                controller,
+                value: value,
+                size: Size(width, height),
+              );
+            },
+            selector: (_, __) => __.value,
           );
-          children.add(child);
+          children.add(c);
         }
 
         return SizedBox.fromSize(
@@ -94,38 +95,18 @@ class VeVodPlayerFull extends StatefulWidget {
   const VeVodPlayerFull({
     super.key,
     required this.tag,
-    required this.stream,
-    required this.backgroundColor,
+    required this.controller,
     required this.child,
-    required this.orientationsEnterFullScreen,
-    required this.systemOverlaysExitFullScreen,
-    required this.orientationsExitFullScreen,
-    this.onClose,
   });
 
   /// Hero Tag
   final Object tag;
 
-  /// 监控全屏的状态变化
-  final StreamController<bool> stream;
-
-  /// 背景色
-  final Color backgroundColor;
+  /// {@macro ve.vod.controls.VodPlayerController}
+  final VeVodPlayerController controller;
 
   /// 视频组件
   final VeVodPlayerInherited child;
-
-  /// 定义进入全屏时允许的设备方向
-  final List<DeviceOrientation> orientationsEnterFullScreen;
-
-  /// 定义退出全屏后可见的系统层展示
-  final List<SystemUiOverlay> systemOverlaysExitFullScreen;
-
-  /// 定义退出全屏后允许的设备方向
-  final List<DeviceOrientation> orientationsExitFullScreen;
-
-  /// 关闭全屏
-  final VoidCallback? onClose;
 
   @override
   State<VeVodPlayerFull> createState() => _VeVodPlayerFullState();
@@ -140,7 +121,7 @@ class _VeVodPlayerFullState extends State<VeVodPlayerFull> {
     Future<void>.delayed(Duration.zero, enterFullScreen);
 
     /// 全屏相关
-    _stream = widget.stream.stream.listen(_listener);
+    _stream = controller._fullScreenStream.stream.listen(_listener);
 
     super.initState();
   }
@@ -165,12 +146,12 @@ class _VeVodPlayerFullState extends State<VeVodPlayerFull> {
     final Widget child = PopScope(
       onPopInvoked: (bool didPop) {
         if (didPop) return;
-        widget.onClose?.call();
+        controller.toggleFullScreen(isFullScreen: false);
       },
       canPop: false,
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        backgroundColor: widget.backgroundColor,
+        backgroundColor: config.backgroundColor,
         body: Center(child: widget.child),
       ),
     );
@@ -181,26 +162,18 @@ class _VeVodPlayerFullState extends State<VeVodPlayerFull> {
   /// 进入全屏模式
   Future<void> enterFullScreen() async {
     await SystemChrome.setPreferredOrientations(<DeviceOrientation>[]);
-    await SystemChrome.setPreferredOrientations(
-      widget.orientationsEnterFullScreen,
-    );
-
-    await SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.manual,
-      overlays: <SystemUiOverlay>[],
-    );
+    await SystemChrome.setPreferredOrientations(controller.orientations);
   }
 
   /// 退出全屏模式
   Future<void> exitFullScreen() async {
     await SystemChrome.setPreferredOrientations(<DeviceOrientation>[]);
     await SystemChrome.setPreferredOrientations(
-      widget.orientationsExitFullScreen,
-    );
-
-    await SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.manual,
-      overlays: widget.systemOverlaysExitFullScreen,
+      config.orientationsExitFullScreen,
     );
   }
+
+  VeVodPlayerConfig get config => controller.config;
+
+  VeVodPlayerController get controller => widget.controller;
 }

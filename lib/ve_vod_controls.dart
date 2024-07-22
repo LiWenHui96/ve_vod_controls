@@ -19,8 +19,10 @@ export 'package:ve_vod/ve_vod.dart';
 
 part 'src/controls/ve_vod_player_controls.dart';
 part 'src/controls/ve_vod_player_controls_bottom.dart';
+part 'src/controls/ve_vod_player_controls_center.dart';
 part 'src/controls/ve_vod_player_controls_top.dart';
 part 'src/controls/widget/controls_duration.dart';
+part 'src/controls/widget/controls_lock.dart';
 part 'src/controls/widget/controls_marquee.dart';
 part 'src/controls/widget/controls_max_playback.dart';
 part 'src/controls/widget/controls_play_pause.dart';

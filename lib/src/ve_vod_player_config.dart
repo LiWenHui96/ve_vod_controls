@@ -6,14 +6,18 @@
 part of ve_vod_controls;
 
 /// 依据[value]显示不同的小部件
-typedef VeVodPlayerValueBuilder = List<Widget>? Function(
+typedef VeVodPlayerBuilder = List<Widget>? Function(
+  BuildContext context,
+  VeVodPlayerController controller,
   VeVodPlayerValue value,
 );
 
-/// 根据是否为全屏获取[T]
-typedef FullScreenBuilder<T> = T Function(
+/// 中间的小部件。
+typedef VeVodPlayerActionsBuilder = List<Widget>? Function(
   BuildContext context,
-  bool isFullScreen,
+  VeVodPlayerController controller,
+  VeVodPlayerValue value,
+  Widget lockButton,
 );
 
 /// 视频播放器[VeVodPlayer]配置
@@ -35,7 +39,6 @@ class VeVodPlayerConfig {
     this.overlayBuilder,
     this.fullScreenAtStartUp = false,
     this.orientationsEnterFullScreen,
-    this.systemOverlaysExitFullScreen = SystemUiOverlay.values,
     this.orientationsExitFullScreen = DeviceOrientation.values,
     this.hasControls = true,
     this.httpHeaders,
@@ -101,7 +104,7 @@ class VeVodPlayerConfig {
   final bool looping;
 
   /// 放置在视频和控件之间的小部件
-  final VeVodPlayerValueBuilder? overlayBuilder;
+  final VeVodPlayerBuilder? overlayBuilder;
 
   /// 是否在启动时开启全屏播放
   ///
@@ -110,9 +113,6 @@ class VeVodPlayerConfig {
 
   /// 定义进入全屏时允许的设备方向
   final List<DeviceOrientation>? orientationsEnterFullScreen;
-
-  /// 定义退出全屏后可见的系统层展示
-  final List<SystemUiOverlay> systemOverlaysExitFullScreen;
 
   /// 定义退出全屏后允许的设备方向
   final List<DeviceOrientation> orientationsExitFullScreen;
@@ -138,16 +138,20 @@ class VeVodPlayerControlsConfig {
     ],
     this.toolTipBackgroundColor = Colors.black54,
     this.foregroundColor = Colors.white,
-    this.textSize = 14,
+    this.textSize = 12,
     this.textStyle,
     this.iconSize = 24,
     this.hasBackButton = true,
     this.backButton,
     this.title,
-    this.actions,
+    this.titleTextStyle,
+    this.actionsBuilder,
+    this.centerLeftActionsBuilder,
+    this.centerRightActionsBuilder,
     this.allowLongPress = true,
     this.allowVolumeOrBrightness = true,
     this.allowProgress = true,
+    this.allowLock = true,
     this.progressColors,
   });
 
@@ -176,7 +180,7 @@ class VeVodPlayerControlsConfig {
 
   /// 文本字体大小
   ///
-  /// 默认为14
+  /// 默认为12
   final double textSize;
 
   /// 文本样式
@@ -198,13 +202,21 @@ class VeVodPlayerControlsConfig {
   /// 标题
   final String? title;
 
-  /// 自定义操作按钮
-  final FullScreenBuilder<List<Widget>?>? actions;
+  /// 标题文本样式
+  final TextStyle? titleTextStyle;
 
-  /// 指示器使用的默认颜色
+  /// 自定义操作按钮
+  final VeVodPlayerBuilder? actionsBuilder;
+
+  /// 中间左侧的小部件
   ///
-  /// 有关默认值，请参阅[ControlsProgressColors]
-  final ControlsProgressColors? progressColors;
+  /// `lockButton`是可锁定的按钮，用于决定把它放在哪里
+  final VeVodPlayerActionsBuilder? centerLeftActionsBuilder;
+
+  /// 中间右侧的小部件
+  ///
+  /// `lockButton`是可锁定的按钮，用于决定把它放在哪里
+  final VeVodPlayerActionsBuilder? centerRightActionsBuilder;
 
   /// 是否通过长按实现最大播放速度播放
   ///
@@ -220,6 +232,16 @@ class VeVodPlayerControlsConfig {
   ///
   /// 默认为true
   final bool allowProgress;
+
+  /// 是否可锁定
+  ///
+  /// 默认为true
+  final bool allowLock;
+
+  /// 指示器使用的默认颜色
+  ///
+  /// 有关默认值，请参阅[ControlsProgressColors]
+  final ControlsProgressColors? progressColors;
 
   /// 默认文本样式
   TextStyle get defaultTextStyle {

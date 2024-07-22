@@ -141,7 +141,7 @@ class _ControlsProgressState extends State<ControlsProgress> {
           child: CustomPaint(
             size: Size(
               constraints.constrainWidth(MediaQuery.sizeOf(context).width),
-              widget.height,
+              max(widget.height, 4),
             ),
             painter: ControlsProgressPainter(
               value: widget.value,

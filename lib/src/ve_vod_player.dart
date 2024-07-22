@@ -71,12 +71,7 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
       final PageRouteBuilder<dynamic> route = PageRouteBuilder<dynamic>(
         pageBuilder: (_, __, ___) => VeVodPlayerFull(
           tag: heroTag,
-          stream: controller._fullScreenStream,
-          backgroundColor: config.backgroundColor,
-          orientationsEnterFullScreen: controller.orientations,
-          systemOverlaysExitFullScreen: config.systemOverlaysExitFullScreen,
-          orientationsExitFullScreen: config.orientationsExitFullScreen,
-          onClose: () => controller.toggleFullScreen(isFullScreen: false),
+          controller: controller,
           child: _buildVideo,
         ),
         transitionsBuilder: (_, Animation<double> animation, __, Widget child) {
@@ -313,7 +308,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
   /// 将起播位置设置为[moment]
   Future<void> setStartTimeMs(Duration? moment) async {
-    if (moment == null) return;
+    if (moment == null || value.isInitialized) return;
     await _vodPlayer.setStartTimeMs(moment.inMilliseconds.toDouble());
   }
 
@@ -465,6 +460,13 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
       return config.orientationsEnterFullScreen!;
     }
     return value.orientations;
+  }
+
+  /// 切换 锁定状态
+  void toggleLock() {
+    if (!value.isInitialized) return;
+
+    value = value.copyWith(isLock: !value.isLock);
   }
 
   /// 获取播放时长
@@ -910,8 +912,8 @@ class VeVodPlayerValue {
   @override
   int get hashCode => Object.hash(
         duration,
-        position,
         size,
+        position,
         buffered,
         isInitialized,
         isReadyToDisplay,
@@ -924,6 +926,7 @@ class VeVodPlayerValue {
         isMaxPlaybackSpeed,
         resolution,
         resolutions,
+        dragVerticalType,
         dragVerticalValue,
         dragDuration,
         error,

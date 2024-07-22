@@ -57,7 +57,7 @@ class VeVodPlayerControlsBottom extends StatelessWidget {
     final Widget progressBar = ControlsProgress(
       colors: config.progressColors,
       value: value,
-      height: config.iconSize + 8,
+      height: config.iconSize,
       onDragStart: onDragStart,
       onDragUpdate: onDragUpdate,
       onDragEnd: onDragEnd,
@@ -82,14 +82,39 @@ class VeVodPlayerControlsBottom extends StatelessWidget {
       child: progressBar,
     );
 
-    child = Row(
-      children: <Widget>[
-        playPause,
-        duration,
-        Expanded(child: child),
-        fullScreenButton,
-      ],
-    );
+    /// 屏幕方向
+    final Orientation orientation = MediaQuery.orientationOf(context);
+
+    if (orientation == Orientation.landscape) {
+      child = Row(children: <Widget>[duration, Expanded(child: child)]);
+
+      child = Column(
+        children: <Widget>[
+          Padding(padding: const EdgeInsets.fromLTRB(8, 8, 8, 0), child: child),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[playPause, fullScreenButton],
+          ),
+        ],
+      );
+    } else if (orientation == Orientation.portrait) {
+      child = Row(
+        children: <Widget>[
+          playPause,
+          duration,
+          Expanded(child: child),
+          fullScreenButton,
+        ],
+      );
+    }
+
+    final EdgeInsets padding = MediaQuery.paddingOf(context);
+    if (orientation == Orientation.landscape) {
+      child = Padding(
+        padding: EdgeInsets.only(bottom: padding.bottom / 4),
+        child: child,
+      );
+    }
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -99,7 +124,11 @@ class VeVodPlayerControlsBottom extends StatelessWidget {
           colors: config.backgroundColor,
         ),
       ),
-      child: child,
+      child: SafeArea(
+        top: false,
+        bottom: orientation == Orientation.portrait && value.isFullScreen,
+        child: child,
+      ),
     );
   }
 }

@@ -34,9 +34,18 @@ class VeVodPlayerControlsTop extends StatelessWidget {
     ];
 
     final List<Widget>? actions =
-        config.actions?.call(context, value.isFullScreen);
-    if (actions != null && actions.isNotEmpty && !value.isCompleted) {
-      children.addAll(actions);
+        config.actionsBuilder?.call(context, controller, value);
+    if (actions != null && actions.isNotEmpty) children.addAll(actions);
+
+    Widget child = Row(children: children);
+
+    /// 屏幕方向
+    final Orientation orientation = MediaQuery.orientationOf(context);
+    if (orientation == Orientation.landscape) {
+      child = Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: child,
+      );
     }
 
     return DecoratedBox(
@@ -47,7 +56,7 @@ class VeVodPlayerControlsTop extends StatelessWidget {
           colors: config.backgroundColor,
         ),
       ),
-      child: Row(children: children),
+      child: SafeArea(bottom: false, child: child),
     );
   }
 
@@ -67,8 +76,11 @@ class VeVodPlayerControlsTop extends StatelessWidget {
         MediaQuery.orientationOf(context) == Orientation.landscape;
 
     if (isNotBlank && isLandscape && !value.isCompleted) {
-      final Text child =
-          Text(title, style: config.defaultTextStyle, maxLines: 1);
+      final Text child = Text(
+        title,
+        style: config.titleTextStyle ?? config.defaultTextStyle,
+        maxLines: 1,
+      );
       return Expanded(child: ControlsMarquee(child: child));
     } else {
       return const Spacer();
