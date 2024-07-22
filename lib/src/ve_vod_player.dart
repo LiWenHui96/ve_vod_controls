@@ -22,17 +22,20 @@ class VeVodPlayer extends StatefulWidget {
 
 class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
   /// 监控全屏的状态变化
-  StreamSubscription<bool>? _fullScreenListener;
+  StreamSubscription<bool>? _fullScreenStream;
 
   /// 是否自动播放、暂停播放视频 - 可视性
   bool isAutoPlayByVisible = false;
 
   @override
   void initState() {
+    /// 初始化
+    controller._init();
+
     WidgetsBinding.instance.addObserver(this);
 
     /// 全屏相关
-    _fullScreenListener = controller._fullScreenStream.stream.listen(_listener);
+    _fullScreenStream = controller._fullScreenStream.stream.listen(_listener);
 
     super.initState();
   }
@@ -40,11 +43,14 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
   @override
   void didUpdateWidget(covariant VeVodPlayer oldWidget) {
     if (oldWidget.controller.uniqueId != widget.controller.uniqueId) {
+      /// 注销
       oldWidget.controller.dispose();
 
-      _fullScreenListener?.cancel();
-      _fullScreenListener =
-          controller._fullScreenStream.stream.listen(_listener);
+      /// 初始化
+      controller._init();
+
+      _fullScreenStream?.cancel();
+      _fullScreenStream = controller._fullScreenStream.stream.listen(_listener);
     }
 
     super.didUpdateWidget(oldWidget);
@@ -53,7 +59,7 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _fullScreenListener?.cancel();
+    _fullScreenStream?.cancel();
     controller.dispose();
 
     super.dispose();
@@ -62,30 +68,29 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
   /// 全屏状态监听
   Future<void> _listener(bool isFullScreen) async {
     if (isFullScreen) {
-      await controller.enterFullScreen(context);
-
       final PageRouteBuilder<dynamic> route = PageRouteBuilder<dynamic>(
-        pageBuilder: (BuildContext context, _, __) => PopScope(
-          onPopInvoked: (bool didPop) {
-            if (didPop) return;
-            controller.toggleFullScreen(isFullScreen: false);
-          },
-          canPop: false,
-          child: Scaffold(
-            resizeToAvoidBottomInset: false,
-            backgroundColor: config.backgroundColor,
-            body: Center(child: _buildVideo),
-          ),
+        pageBuilder: (_, __, ___) => VeVodPlayerFull(
+          tag: heroTag,
+          stream: controller._fullScreenStream,
+          backgroundColor: config.backgroundColor,
+          orientationsEnterFullScreen: controller.orientations,
+          systemOverlaysExitFullScreen: config.systemOverlaysExitFullScreen,
+          orientationsExitFullScreen: config.orientationsExitFullScreen,
+          onClose: () => controller.toggleFullScreen(isFullScreen: false),
+          child: _buildVideo,
         ),
-        transitionsBuilder:
-            (_, Animation<double> animation, __, Widget child) =>
-                FadeTransition(opacity: animation, child: child),
+        transitionsBuilder: (_, Animation<double> animation, __, Widget child) {
+          final CurvedAnimation parent =
+              CurvedAnimation(parent: animation, curve: Curves.fastOutSlowIn);
+          return SlideTransition(
+            position: Tween<Offset>(begin: Offset.zero, end: Offset.zero)
+                .animate(parent),
+            child: child,
+          );
+        },
         fullscreenDialog: true,
       );
-      if (mounted) await Navigator.push(context, route);
-    } else {
-      await controller.exitFullScreen();
-      if (mounted) Navigator.pop(context);
+      await Navigator.push(context, route);
     }
   }
 
@@ -136,7 +141,7 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
       );
     }
 
-    return child;
+    return Hero(tag: heroTag, child: child);
   }
 
   VeVodPlayerInherited get _buildVideo {
@@ -148,6 +153,8 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
       ),
     );
   }
+
+  Object get heroTag => Key('Ve_Vod_Player_$hashCode');
 
   VeVodPlayerConfig get config => controller.config;
 
@@ -175,9 +182,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     VeVodPlayerControlsConfig? controlsConfig,
   })  : config = config ?? VeVodPlayerConfig(),
         controlsConfig = controlsConfig ?? VeVodPlayerControlsConfig(),
-        super(const VeVodPlayerValue.uninitialized()) {
-    _init();
-  }
+        super(const VeVodPlayerValue.uninitialized());
 
   /// 播放源
   final TTVideoEngineMediaSource source;
@@ -438,40 +443,12 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     value = value.copyWith(dragDuration: duration);
   }
 
-  /// 进入全屏模式
-  Future<void> enterFullScreen(BuildContext context) async {
-    await SystemChrome.setPreferredOrientations(<DeviceOrientation>[]);
-    await SystemChrome.setPreferredOrientations(orientations);
-
-    /// 屏幕方向
-    if (!context.mounted) return;
-    final Orientation orientation = MediaQuery.orientationOf(context);
-    await SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.manual,
-      overlays: <SystemUiOverlay>[
-        if (orientation == Orientation.portrait) SystemUiOverlay.top,
-      ],
-    );
-  }
-
-  /// 退出全屏模式
-  Future<void> exitFullScreen() async {
-    await SystemChrome.setPreferredOrientations(<DeviceOrientation>[]);
-    await SystemChrome.setPreferredOrientations(<DeviceOrientation>[
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-
-    await SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.manual,
-      overlays: SystemUiOverlay.values,
-    );
-  }
-
   /// 切换 全屏模式
-  void toggleFullScreen({bool? isFullScreen, bool isFire = true}) {
+  void toggleFullScreen({bool? isFullScreen}) {
+    if (!value.isInitialized) return;
+
     value = value.copyWith(isFullScreen: isFullScreen ?? !value.isFullScreen);
-    if (isFire) _fullScreenStream.add(value.isFullScreen);
+    _fullScreenStream.add(value.isFullScreen);
   }
 
   /// 初始全屏转换监听
@@ -545,6 +522,15 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   void _listener() {
     _vodPlayer
       ..onPrepared = () {
+        /// 获取播放时长
+        _getDuration();
+
+        /// 获取视频尺寸
+        _getVideoSize();
+
+        /// 获取清晰度
+        _getResolution();
+
         /// 完成初始化，即将开始播放。
         value = value.copyWith(
           isInitialized: true,
@@ -556,15 +542,6 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
         /// 否则无须暂停
         if (config.autoInitialize && !config.autoPlay && _isFirstInit) pause();
         _isFirstInit = false;
-
-        /// 获取播放时长
-        _getDuration();
-
-        /// 获取视频尺寸
-        _getVideoSize();
-
-        /// 获取清晰度
-        _getResolution();
       }
       ..readyToDisplay = () {
         /// 首帧渲染完成回调

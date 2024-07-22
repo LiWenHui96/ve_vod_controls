@@ -37,6 +37,9 @@ class VeVodPlayerControls extends StatefulWidget {
 class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
   late VeVodPlayerControlsController _controlsController;
 
+  /// 监控全屏的状态变化
+  StreamSubscription<bool>? _stream;
+
   /// 播放控制器
   VeVodPlayerController get controller => widget.controller;
 
@@ -47,7 +50,19 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
   void initState() {
     _controlsController = context.read<VeVodPlayerControlsController>();
 
+    /// 全屏相关
+    _stream = controller._fullScreenStream.stream.listen((bool isFullScreen) {
+      showOrHide(visible: false);
+    });
+
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _stream?.cancel();
+
+    super.dispose();
   }
 
   @override
@@ -107,11 +122,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
             onDragUpdate: onDragUpdate,
             onDragEnd: onHorizontalDragEnd,
             onTapUp: onTapUp,
-            onFullScreen: () {
-              /// 显示
-              showOrHide(visible: true);
-              controller.toggleFullScreen();
-            },
+            onFullScreen: () => controller.toggleFullScreen(),
           ),
         ),
       ],

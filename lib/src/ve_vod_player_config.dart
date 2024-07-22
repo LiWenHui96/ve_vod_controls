@@ -35,6 +35,8 @@ class VeVodPlayerConfig {
     this.overlayBuilder,
     this.fullScreenAtStartUp = false,
     this.orientationsEnterFullScreen,
+    this.systemOverlaysExitFullScreen = SystemUiOverlay.values,
+    this.orientationsExitFullScreen = DeviceOrientation.values,
     this.hasControls = true,
     this.httpHeaders,
   });
@@ -108,6 +110,12 @@ class VeVodPlayerConfig {
 
   /// 定义进入全屏时允许的设备方向
   final List<DeviceOrientation>? orientationsEnterFullScreen;
+
+  /// 定义退出全屏后可见的系统层展示
+  final List<SystemUiOverlay> systemOverlaysExitFullScreen;
+
+  /// 定义退出全屏后允许的设备方向
+  final List<DeviceOrientation> orientationsExitFullScreen;
 
   /// 是否显示控制组件
   ///
