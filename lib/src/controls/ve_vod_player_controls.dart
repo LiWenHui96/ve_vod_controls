@@ -83,18 +83,48 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
 
   @override
   Widget build(BuildContext context) {
+    Widget child = Column(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: <Widget>[
+        Visibility(
+          visible: value.allowControlsTop,
+          child: const VeVodPlayerControlsTop(),
+        ),
+        Visibility(
+          visible: value.allowControlsBottom,
+          child: VeVodPlayerControlsBottom(
+            onPlayOrPause: togglePlayPause,
+            onDragStart: onHorizontalDragStart,
+            onDragUpdate: onDragUpdate,
+            onDragEnd: onHorizontalDragEnd,
+            onTapUp: onTapUp,
+            onFullScreen: controller.toggleFullScreen,
+          ),
+        ),
+      ],
+    );
+
     /// 控制器主体
     /// + 显示/隐藏
-    Widget child = Selector<VeVodPlayerControlsController, bool>(
+    child = Selector<VeVodPlayerControlsController, bool>(
       builder: (BuildContext context, bool isVisible, Widget? child) {
         return AnimatedOpacity(
-          opacity: value.isCompleted || isVisible ? 1 : 0,
+          opacity: value.allowControls || isVisible ? 1 : 0,
           duration: kAnimationDuration,
           child: AbsorbPointer(absorbing: !isVisible, child: child),
         );
       },
       selector: (_, __) => __._isVisible,
-      child: _buildBody,
+      child: Stack(
+        alignment: Alignment.center,
+        children: <Widget>[
+          child,
+          if (!value.isCompleted && !value.isDragProgress && value.isFullScreen)
+            VeVodPlayerControlsCenter(
+              onShowControls: () => showOrHide(visible: true),
+            ),
+        ],
+      ),
     );
 
     /// 双击播放/暂停、长按最大速度播放、调整音量、调整屏幕亮度、调节播放进度
@@ -119,61 +149,44 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
       children: <Widget>[
         VeVodPlayerSafeArea(size: widget.size, child: _buildTooltip),
         child,
+        _buildOperation,
       ],
     );
   }
 
-  /// 控制器主体
-  Widget get _buildBody {
-    final Widget child = Column(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: <Widget>[
-        Visibility(
-          visible: !value.isLock && !value.isDragProgress,
-          child: const VeVodPlayerControlsTop(),
-        ),
-        Visibility(
-          visible: !value.isLock && !value.isCompleted,
-          child: VeVodPlayerControlsBottom(
-            onPlayOrPause: togglePlayPause,
-            onDragStart: onHorizontalDragStart,
-            onDragUpdate: onDragUpdate,
-            onDragEnd: onHorizontalDragEnd,
-            onTapUp: onTapUp,
-            onFullScreen: controller.toggleFullScreen,
-          ),
-        ),
-      ],
-    );
+  /// 操作控件
+  Widget get _buildOperation {
+    Widget? child;
 
-    /// 视频播放完成所展示的按钮
-    final Widget finish = GestureDetector(
-      onTap: togglePlayPause,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(.85),
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(Icons.refresh_rounded),
-      ),
-    );
+    if (value.isMaxPreviewTime) {
+      child = config.maxPreviewTimeBuilder?.call(context, controller, value);
+      child ??= Text('试看结束', style: config.defaultTextStyle);
+    }
 
-    return Stack(
-      alignment: Alignment.center,
-      children: <Widget>[
-        child,
-        if (!value.isCompleted && !value.isDragProgress && value.isFullScreen)
-          VeVodPlayerControlsCenter(
-            onShowControls: () => showOrHide(visible: true),
+    if (value.isCompleted) {
+      child = GestureDetector(
+        onTap: togglePlayPause,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(.85),
+            shape: BoxShape.circle,
           ),
-        if (value.isCompleted) finish,
-      ],
-    );
+          child: const Icon(Icons.refresh_rounded),
+        ),
+      );
+    }
+
+    return VeVodPlayerSafeArea(size: widget.size, child: Center(child: child));
   }
 
   /// 提示组件
   Widget get _buildTooltip {
+    if (value.isMaxPreviewTime) return Container(color: Colors.black);
+    if (value.isCompleted) {
+      return Container(color: config.toolTipBackgroundColor);
+    }
+
     Widget background({
       Widget? child,
       AlignmentGeometry? alignment,
@@ -185,7 +198,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: _controlsController.config.toolTipBackgroundColor,
+            color: config.toolTipBackgroundColor,
             borderRadius: BorderRadius.circular(6),
           ),
           margin: margin,
@@ -215,23 +228,12 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
       child = ControlsVertical(
         value: value.dragVerticalValue,
         type: value.dragVerticalType,
-        color: _controlsController.config.foregroundColor,
+        color: config.foregroundColor,
       );
     }
 
     if (value.isBuffering) {
-      child = Text(
-        '正在缓冲...',
-        style: _controlsController.config.defaultTextStyle,
-      );
-    }
-
-    if (value.isCompleted) {
-      return Container(
-        decoration: BoxDecoration(
-          color: _controlsController.config.toolTipBackgroundColor,
-        ),
-      );
+      child = Text('正在缓冲...', style: config.defaultTextStyle);
     }
 
     return background(child: child);
@@ -266,7 +268,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
   /// 长按开始，触发最大播放速率播放
   void onLongPressStart(LongPressStartDetails details) {
     if (!allowPressed ||
-        !_controlsController.config.allowLongPress ||
+        !config.allowLongPress ||
         !value.isPlaying ||
         value.isMaxPlaybackSpeed) {
       return;
@@ -286,7 +288,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
   /// 纵向滑动开始，触发音量/亮度调节
   Future<void> onVerticalDragStart(DragStartDetails details) async {
     if (!allowPressed ||
-        !_controlsController.config.allowVolumeOrBrightness ||
+        !config.allowVolumeOrBrightness ||
         value.isCompleted ||
         value.isDragVertical) return;
 
@@ -327,7 +329,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
   /// 横向滑动开始，触发播放进度调节
   void onHorizontalDragStart(DragStartDetails details) {
     if (!allowPressed ||
-        !_controlsController.config.allowProgress ||
+        !config.allowProgress ||
         value.isCompleted ||
         value.isDragProgress) {
       return;
@@ -374,7 +376,11 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
   }
 
   /// 操作是否可以执行
-  bool get allowPressed => !value.isLock && value.isInitialized;
+  bool get allowPressed =>
+      !value.isLock && value.isInitialized && !value.isMaxPreviewTime;
+
+  /// 配置
+  VeVodPlayerControlsConfig get config => _controlsController.config;
 
   /// 水平范围
   double get totalWidth => size.width.ceilToDouble();

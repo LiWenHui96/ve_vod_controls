@@ -6,7 +6,7 @@
 part of ve_vod_controls;
 
 /// 依据[value]显示不同的小部件
-typedef VeVodPlayerBuilder = List<Widget>? Function(
+typedef VeVodPlayerBuilder<T> = T Function(
   BuildContext context,
   VeVodPlayerController controller,
   VeVodPlayerValue value,
@@ -35,6 +35,7 @@ class VeVodPlayerConfig {
     this.autoInitialize = false,
     this.autoPlay = false,
     this.startAt,
+    this.maxPreviewTime,
     this.looping = false,
     this.overlayBuilder,
     this.fullScreenAtStartUp = false,
@@ -98,13 +99,18 @@ class VeVodPlayerConfig {
   /// 默认为起始位置
   final Duration? startAt;
 
+  /// 试看时长
+  ///
+  /// 如果设置的持续时间超过视频的最大持续时间，则视为可以观看整个视频。
+  final Duration? maxPreviewTime;
+
   /// 是否循环播放
   ///
   /// 默认为false
   final bool looping;
 
   /// 放置在视频和控件之间的小部件
-  final VeVodPlayerBuilder? overlayBuilder;
+  final VeVodPlayerBuilder<List<Widget>?>? overlayBuilder;
 
   /// 是否在启动时开启全屏播放
   ///
@@ -153,6 +159,7 @@ class VeVodPlayerControlsConfig {
     this.allowProgress = true,
     this.allowLock = true,
     this.progressColors,
+    this.maxPreviewTimeBuilder,
   });
 
   /// 首次启动时是否显示控制组件
@@ -206,7 +213,7 @@ class VeVodPlayerControlsConfig {
   final TextStyle? titleTextStyle;
 
   /// 自定义操作按钮
-  final VeVodPlayerBuilder? actionsBuilder;
+  final VeVodPlayerBuilder<List<Widget>?>? actionsBuilder;
 
   /// 中间左侧的小部件
   ///
@@ -242,6 +249,9 @@ class VeVodPlayerControlsConfig {
   ///
   /// 有关默认值，请参阅[ControlsProgressColors]
   final ControlsProgressColors? progressColors;
+
+  /// 超过试看时间时显示的小部件。
+  final VeVodPlayerBuilder<Widget?>? maxPreviewTimeBuilder;
 
   /// 默认文本样式
   TextStyle get defaultTextStyle {

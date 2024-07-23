@@ -120,7 +120,7 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
 
     if (config.allowedVisible) {
       return VisibilityDetector(
-        key: Key('Ve_Vod_Player_Visible_$hashCode'),
+        key: Key('VeVodPlayerVisible_$hashCode'),
         onVisibilityChanged: (VisibilityInfo info) {
           if (!mounted || controller.value.isFullScreen) return;
 
@@ -149,7 +149,7 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
     );
   }
 
-  Object get heroTag => Key('Ve_Vod_Player_$hashCode');
+  Object get heroTag => Key('VeVodPlayer_$hashCode');
 
   VeVodPlayerConfig get config => controller.config;
 
@@ -510,6 +510,24 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     value = value.copyWith(resolutions: resolutions);
   }
 
+  /// 试看判断
+  Future<void> _getMaxPreviewTimeState() async {
+    final Duration? maxPreviewTime = config.maxPreviewTime;
+    if (maxPreviewTime == null) return;
+
+    final Duration position = value.position;
+    if (position >= maxPreviewTime && !value.isMaxPreviewTime) {
+      toggleFullScreen(isFullScreen: false);
+      value = value.copyWith(isMaxPreviewTime: true);
+      _reset();
+      await pause();
+      await seekTo(maxPreviewTime);
+    } else if (position < maxPreviewTime && value.isMaxPreviewTime) {
+      value = value.copyWith(isMaxPreviewTime: false);
+      await play();
+    }
+  }
+
   /// 播放完成 or 播放失败 后，重置
   void _reset() {
     value = value.copyWith(
@@ -603,14 +621,17 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     /// 当 `_timer` 存在，且处于活跃状态时，注销计时器
     if (_timer != null && _timer!.isActive) _cancelTimer();
 
-    _timer = Timer.periodic(Durations.long2, (Timer timer) {
+    _timer = Timer.periodic(Durations.long2, (Timer timer) async {
       if (!timer.isActive) return;
 
       /// 获取播放进度
-      _getPosition();
+      await _getPosition();
 
       /// 获取已缓冲的播放时长
-      _getPlayable();
+      await _getPlayable();
+
+      /// 试看判断
+      await _getMaxPreviewTimeState();
     });
   }
 
@@ -668,6 +689,7 @@ class VeVodPlayerValue {
     this.isLooping = false,
     this.isLock = false,
     this.isFullScreen = false,
+    this.isMaxPreviewTime = false,
     this.playbackSpeed = 1.0,
     this.isMaxPlaybackSpeed = false,
     this.resolution =
@@ -724,6 +746,9 @@ class VeVodPlayerValue {
 
   /// 是否是全屏模式
   final bool isFullScreen;
+
+  /// 是否超过试看时间
+  final bool isMaxPreviewTime;
 
   /// 当前播放速度
   final double playbackSpeed;
@@ -797,6 +822,15 @@ class VeVodPlayerValue {
     }
   }
 
+  /// 播放“完成” - 播放完成、存在异常、试看时间已过
+  bool get allowControls => isCompleted || isMaxPreviewTime;
+
+  /// 是否展示控制器 - 顶部
+  bool get allowControlsTop => !isLock && !isDragProgress;
+
+  /// 是否展示控制器 - 底部
+  bool get allowControlsBottom => !isLock && !isCompleted && !isMaxPreviewTime;
+
   /// 返回与当前实例具有相同值新实例，但作为参数传递给[copyWith]，任何重写除外
   VeVodPlayerValue copyWith({
     Duration? duration,
@@ -810,6 +844,7 @@ class VeVodPlayerValue {
     bool? isLooping,
     bool? isLock,
     bool? isFullScreen,
+    bool? isMaxPreviewTime,
     double? playbackSpeed,
     bool? isMaxPlaybackSpeed,
     TTVideoEngineResolutionType? resolution,
@@ -836,6 +871,7 @@ class VeVodPlayerValue {
       isLooping: isLooping ?? this.isLooping,
       isLock: isLock ?? this.isLock,
       isFullScreen: isFullScreen ?? this.isFullScreen,
+      isMaxPreviewTime: isMaxPreviewTime ?? this.isMaxPreviewTime,
       playbackSpeed: playbackSpeed ?? this.playbackSpeed,
       isMaxPlaybackSpeed: isMaxPlaybackSpeed ?? this.isMaxPlaybackSpeed,
       resolution: resolution ?? this.resolution,
@@ -867,6 +903,7 @@ class VeVodPlayerValue {
         'isLock: $isLock, '
         'isLooping: $isLooping, '
         'isFullScreen: $isFullScreen, '
+        'isMaxPreviewTime: $isMaxPreviewTime, '
         'playbackSpeed: $playbackSpeed, '
         'isMaxPlaybackSpeed: $isMaxPlaybackSpeed, '
         'resolution: $resolution, '
@@ -897,6 +934,7 @@ class VeVodPlayerValue {
           isLock == other.isLock &&
           isLooping == other.isLooping &&
           isFullScreen == other.isFullScreen &&
+          isMaxPreviewTime == other.isMaxPreviewTime &&
           playbackSpeed == other.playbackSpeed &&
           isMaxPlaybackSpeed == other.isMaxPlaybackSpeed &&
           resolution == other.resolution &&
@@ -911,10 +949,8 @@ class VeVodPlayerValue {
 
   @override
   int get hashCode => Object.hash(
-        duration,
         size,
-        position,
-        buffered,
+        Object.hash(duration, position, buffered),
         isInitialized,
         isReadyToDisplay,
         isPlaying,
@@ -922,13 +958,11 @@ class VeVodPlayerValue {
         isLock,
         isLooping,
         isFullScreen,
-        playbackSpeed,
-        isMaxPlaybackSpeed,
-        resolution,
-        resolutions,
-        dragVerticalType,
-        dragVerticalValue,
-        dragDuration,
+        isMaxPreviewTime,
+        Object.hash(playbackSpeed, isMaxPlaybackSpeed),
+        Object.hash(resolution, resolutions),
+        Object.hash(isDragVertical, dragVerticalType, dragVerticalValue),
+        Object.hash(isDragProgress, dragDuration),
         error,
         isCompleted,
       );
