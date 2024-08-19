@@ -160,6 +160,9 @@ class _VeVodPlayerFullState extends State<VeVodPlayerFull> {
   Future<void> enterFullScreen() async {
     await SystemChrome.setPreferredOrientations(<DeviceOrientation>[]);
     await SystemChrome.setPreferredOrientations(controller.orientations);
+
+    /// 更换视频播放视图
+    controller._setView();
   }
 
   /// 退出全屏模式
