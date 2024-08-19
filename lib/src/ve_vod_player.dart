@@ -70,7 +70,6 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
     if (isFullScreen) {
       final PageRouteBuilder<dynamic> route = PageRouteBuilder<dynamic>(
         pageBuilder: (_, __, ___) => VeVodPlayerFull(
-          tag: heroTag,
           controller: controller,
           child: _buildVideo,
         ),
@@ -137,27 +136,18 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
       );
     }
 
-    return Hero(tag: heroTag, child: child);
+    return child;
   }
 
   VeVodPlayerInherited get _buildVideo {
-    final Widget child = Selector<VeVodPlayerController, TTVideoPlayerView?>(
-      builder: (BuildContext context, TTVideoPlayerView? view, _) {
-        return VeVodPlayerBody(vodPlayerView: view);
-      },
-      selector: (_, __) => __._vodPlayerView,
-    );
-
     return VeVodPlayerInherited(
       controller: controller,
       child: ChangeNotifierProvider<VeVodPlayerController>.value(
         value: controller,
-        builder: (_, __) => child,
+        builder: (_, __) => const VeVodPlayerBody(),
       ),
     );
   }
-
-  Object get heroTag => Key('VeVodPlayer_$hashCode');
 
   VeVodPlayerConfig get config => controller.config;
 

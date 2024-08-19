@@ -6,10 +6,7 @@
 part of ve_vod_controls;
 
 class VeVodPlayerBody extends StatelessWidget {
-  const VeVodPlayerBody({super.key, this.vodPlayerView});
-
-  /// 播放器视图
-  final TTVideoPlayerView? vodPlayerView;
+  const VeVodPlayerBody({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +25,13 @@ class VeVodPlayerBody extends StatelessWidget {
           minScale: config.minScale,
           panEnabled: config.panEnabled,
           scaleEnabled: config.scaleEnabled,
-          child: vodPlayerView ?? const SizedBox.shrink(),
+          child: Selector<VeVodPlayerController, TTVideoPlayerView?>(
+            builder: (BuildContext context, TTVideoPlayerView? view, _) {
+              if (view == null) return const SizedBox.shrink();
+              return view;
+            },
+            selector: (_, __) => __._vodPlayerView,
+          ),
         );
 
         /// 占位图
@@ -91,13 +94,9 @@ class VeVodPlayerBody extends StatelessWidget {
 class VeVodPlayerFull extends StatefulWidget {
   const VeVodPlayerFull({
     super.key,
-    required this.tag,
     required this.controller,
     required this.child,
   });
-
-  /// Hero Tag
-  final Object tag;
 
   /// {@macro ve.vod.controls.VodPlayerController}
   final VeVodPlayerController controller;
@@ -140,7 +139,7 @@ class _VeVodPlayerFullState extends State<VeVodPlayerFull> {
 
   @override
   Widget build(BuildContext context) {
-    final Widget child = PopScope(
+    return PopScope(
       onPopInvoked: (bool didPop) {
         if (didPop) return;
         controller.toggleFullScreen(isFullScreen: false);
@@ -152,8 +151,6 @@ class _VeVodPlayerFullState extends State<VeVodPlayerFull> {
         body: Center(child: widget.child),
       ),
     );
-
-    return Hero(tag: widget.tag, child: child);
   }
 
   /// 进入全屏模式
