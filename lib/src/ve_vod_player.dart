@@ -96,6 +96,7 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
       controller.pause();
     } else if (state == AppLifecycleState.resumed &&
         !controller._isPauseByUser) {
+      controller._vodPlayer.forceDraw();
       controller.play();
     }
   }
@@ -140,11 +141,18 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
   }
 
   VeVodPlayerInherited get _buildVideo {
+    final Widget child = Selector<VeVodPlayerController, TTVideoPlayerView?>(
+      builder: (BuildContext context, TTVideoPlayerView? view, _) {
+        return VeVodPlayerBody(vodPlayerView: view);
+      },
+      selector: (_, __) => __._vodPlayerView,
+    );
+
     return VeVodPlayerInherited(
       controller: controller,
       child: ChangeNotifierProvider<VeVodPlayerController>.value(
         value: controller,
-        builder: (_, __) => const VeVodPlayerBody(),
+        builder: (_, __) => child,
       ),
     );
   }
@@ -202,6 +210,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
   /// 播放器视图
   TTVideoPlayerView? _vodPlayerView;
+  int viewId = 0;
 
   /// 本机视图类型，仅支持Android端
   NativeViewType _nativeViewType = NativeViewType.TextureView;
@@ -266,11 +275,14 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   /// 构建播放视图
   void _setView() {
     _nativeViewType = NativeViewType.TextureView;
-    if (_vodPlayerView != null) _vodPlayerView = null;
-    _vodPlayerView = TTVideoPlayerView(
+    final TTVideoPlayerView view = TTVideoPlayerView(
       nativeViewType: _nativeViewType,
-      onPlatformViewCreated: _vodPlayer.setPlayerContainerView,
+      onPlatformViewCreated: (int viewId) {
+        if (!value.isFullScreen) this.viewId = viewId;
+        _vodPlayer.setPlayerContainerView(viewId);
+      },
     );
+    _vodPlayerView = view;
     notifyListeners();
   }
 
@@ -444,6 +456,9 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
     value = value.copyWith(isFullScreen: isFullScreen ?? !value.isFullScreen);
     _fullScreenStream.add(value.isFullScreen);
+
+    /// 恢复播放
+    if (!value.isFullScreen) _vodPlayer.setPlayerContainerView(viewId);
   }
 
   /// 初始全屏转换监听

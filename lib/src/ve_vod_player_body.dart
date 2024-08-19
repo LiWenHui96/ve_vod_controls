@@ -6,7 +6,10 @@
 part of ve_vod_controls;
 
 class VeVodPlayerBody extends StatelessWidget {
-  const VeVodPlayerBody({super.key});
+  const VeVodPlayerBody({super.key, this.vodPlayerView});
+
+  /// 播放器视图
+  final TTVideoPlayerView? vodPlayerView;
 
   @override
   Widget build(BuildContext context) {
@@ -25,13 +28,7 @@ class VeVodPlayerBody extends StatelessWidget {
           minScale: config.minScale,
           panEnabled: config.panEnabled,
           scaleEnabled: config.scaleEnabled,
-          child: Selector<VeVodPlayerController, TTVideoPlayerView?>(
-            builder: (BuildContext context, TTVideoPlayerView? view, _) {
-              if (view == null) return const SizedBox.shrink();
-              return view;
-            },
-            selector: (_, __) => __._vodPlayerView,
-          ),
+          child: vodPlayerView ?? const SizedBox.shrink(),
         );
 
         /// 占位图
