@@ -21,7 +21,6 @@ dependencies:
   provider: ^6.1.2
   screen_brightness: ^1.0.1
   ve_vod: 1.42.3-2
-  visibility_detector: ^0.4.0+2
   wakelock_plus: ^1.2.8
 
 dev_dependencies:

@@ -65,10 +65,10 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
 
     /// 全屏相关
     _stream = controller._fullScreenStream.stream.listen((bool isFullScreen) {
-      showOrHide(visible: false);
-      if (!isFullScreen) {
-        Future<void>.delayed(Durations.short4, () => showOrHide(visible: true));
-      }
+      Future<void>.delayed(Durations.long2, () {
+        _controlsController.toggleImmVisible(visible: true);
+        if (!isFullScreen) showOrHide(visible: true);
+      });
     });
 
     super.initState();
@@ -98,7 +98,10 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
             onDragUpdate: onDragUpdate,
             onDragEnd: onHorizontalDragEnd,
             onTapUp: onTapUp,
-            onFullScreen: controller.toggleFullScreen,
+            onFullScreen: () {
+              _controlsController.toggleImmVisible(visible: false);
+              controller.toggleFullScreen();
+            },
           ),
         ),
       ],
@@ -107,7 +110,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
     /// 控制器主体
     /// + 显示/隐藏
     child = Selector<VeVodPlayerControlsController, bool>(
-      builder: (BuildContext context, bool isVisible, Widget? child) {
+      builder: (_, bool isVisible, Widget? child) {
         return AnimatedOpacity(
           opacity: value.allowControls || isVisible ? 1 : 0,
           duration: kAnimationDuration,
@@ -125,6 +128,19 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
             ),
         ],
       ),
+    );
+
+    /// 控制器主体
+    /// + 即刻显示/隐藏
+    child = Selector<VeVodPlayerControlsController, bool>(
+      builder: (_, bool isVisible, Widget? child) {
+        return Visibility(
+          visible: isVisible,
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
+      selector: (_, __) => __._immVisible,
+      child: child,
     );
 
     /// 双击播放/暂停、长按最大速度播放、调整音量、调整屏幕亮度、调节播放进度
@@ -241,9 +257,10 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
 
   /// 显示/隐藏 控制器
   void showOrHide({bool? visible, bool? needTimer}) {
+    needTimer ??= value.isPlaying;
     _controlsController
       .._cancelTimer()
-      ..showOrHide(visible: visible, needTimer: needTimer ?? value.isPlaying);
+      ..toggleVisible(visible: visible, needTimer: needTimer);
   }
 
   /// 播放/暂停 视频
@@ -402,7 +419,7 @@ class VeVodPlayerControlsController extends ChangeNotifier {
       final Duration duration = isVisible ? Durations.short4 : Duration.zero;
       Future<void>.delayed(
         duration,
-        () => showOrHide(visible: true, needTimer: needTimer),
+        () => toggleVisible(visible: true, needTimer: needTimer),
       );
     }
   }
@@ -412,14 +429,17 @@ class VeVodPlayerControlsController extends ChangeNotifier {
   /// 防止页面销毁后，异步任务才完成，导致报错
   bool _isDisposed = false;
 
-  /// 是否展示计时器
+  /// 是否展示控制器
   bool _isVisible = false;
+
+  /// 即刻消失
+  bool _immVisible = true;
 
   /// 计时器
   Timer? _timer;
 
   /// 显示或隐藏控制组件
-  void showOrHide({bool? visible, bool needTimer = true}) {
+  void toggleVisible({bool? visible, bool needTimer = true}) {
     _isVisible = visible ?? !_isVisible;
     notifyListeners();
 
@@ -451,6 +471,12 @@ class VeVodPlayerControlsController extends ChangeNotifier {
     _timer = null;
   }
 
+  /// 即刻显示/消失
+  void toggleImmVisible({bool? visible}) {
+    _immVisible = visible ?? !_immVisible;
+    notifyListeners();
+  }
+
   @override
   void notifyListeners() {
     if (!_isDisposed) super.notifyListeners();
@@ -472,7 +498,7 @@ class VeVodPlayerControlsController extends ChangeNotifier {
 const Duration kDefaultHideDuration = Duration(seconds: 3);
 
 /// 动画时长
-const Duration kAnimationDuration = Duration(milliseconds: 300);
+const Duration kAnimationDuration = Durations.medium2;
 
 /// 音量或屏幕亮度
 enum DragVerticalType {

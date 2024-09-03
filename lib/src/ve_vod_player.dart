@@ -16,23 +16,31 @@ class VeVodPlayer extends StatefulWidget {
   /// {@macro ve.vod.controls.VodPlayerController}
   final VeVodPlayerController controller;
 
+  /// {@macro ve.vod.controls.VeVodPlayerRouteObserver}
+  ///
+  /// example:
+  /// MaterialApp(
+  ///   navigatorObservers: <NavigatorObserver>[
+  ///     ...
+  ///     VeVodPlayer.observer,
+  ///     ...
+  ///   ],
+  /// );
+  // ignore: always_specify_types
+  static RouteObserver observer = RouteObserver();
+
   @override
   State<VeVodPlayer> createState() => _VeVodPlayerState();
 }
 
-class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
+class _VeVodPlayerState extends State<VeVodPlayer> {
   /// 监控全屏的状态变化
   StreamSubscription<bool>? _fullScreenStream;
-
-  /// 是否自动播放、暂停播放视频 - 可视性
-  bool isAutoPlayByVisible = false;
 
   @override
   void initState() {
     /// 初始化
-    controller._init();
-
-    WidgetsBinding.instance.addObserver(this);
+    controller._initVodPlayer();
 
     /// 全屏相关
     _fullScreenStream = controller._fullScreenStream.stream.listen(_listener);
@@ -47,7 +55,7 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
       oldWidget.controller.dispose();
 
       /// 初始化
-      controller._init();
+      controller._initVodPlayer();
 
       _fullScreenStream?.cancel();
       _fullScreenStream = controller._fullScreenStream.stream.listen(_listener);
@@ -58,7 +66,6 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _fullScreenStream?.cancel();
     controller.dispose();
 
@@ -69,10 +76,7 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
   Future<void> _listener(bool isFullScreen) async {
     if (isFullScreen) {
       final PageRouteBuilder<dynamic> route = PageRouteBuilder<dynamic>(
-        pageBuilder: (_, __, ___) => VeVodPlayerFull(
-          controller: controller,
-          child: _buildVideo,
-        ),
+        pageBuilder: (_, __, ___) => VeVodPlayerFull(controller: controller),
         transitionsBuilder: (_, Animation<double> animation, __, Widget child) {
           final CurvedAnimation parent =
               CurvedAnimation(parent: animation, curve: Curves.fastOutSlowIn);
@@ -85,67 +89,28 @@ class _VeVodPlayerState extends State<VeVodPlayer> with WidgetsBindingObserver {
         fullscreenDialog: true,
       );
       await Navigator.push(context, route);
-    }
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.paused) {
-      controller.pause();
-    } else if (state == AppLifecycleState.resumed &&
-        !controller._isPauseByUser) {
-      controller._vodPlayer.forceDraw();
-      controller.play();
+    } else {
+      Future<void>.delayed(Durations.short1, () {
+        controller._toggleOrientations();
+        Navigator.pop(context);
+      });
+      await controller._setPlayerContainerView(controller.viewId);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final Widget child = SizedBox(
-      width: config.width,
-      height: config.height,
-      child: LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-          final Size size = MediaQuery.sizeOf(context);
-          return Container(
-            color: config.backgroundColor,
-            width: constraints.constrainWidth(size.width),
-            height: constraints.constrainHeight(size.height),
-            child: _buildVideo,
-          );
-        },
-      ),
+    final TTVideoPlayerView vodPlayerView = TTVideoPlayerView(
+      key: Key('Ve_Vod_Player_${controller.hashCode}'),
+      nativeViewType: controller._nativeViewType,
+      onPlatformViewCreated: controller._init,
     );
 
-    if (config.allowedVisible) {
-      return VisibilityDetector(
-        key: Key('VeVodPlayerVisible_$hashCode'),
-        onVisibilityChanged: (VisibilityInfo info) {
-          if (!mounted || controller.value.isFullScreen) return;
-
-          if (info.visibleFraction < .5 && controller.value.isPlaying) {
-            controller.pause();
-            isAutoPlayByVisible = true;
-          } else if (info.visibleFraction > .9 && isAutoPlayByVisible) {
-            controller.play();
-            isAutoPlayByVisible = false;
-          }
-        },
-        child: child,
-      );
-    }
-
-    return child;
-  }
-
-  VeVodPlayerInherited get _buildVideo {
-    return VeVodPlayerInherited(
-      controller: controller,
-      child: ChangeNotifierProvider<VeVodPlayerController>.value(
-        value: controller,
-        builder: (_, __) => const VeVodPlayerBody(),
-      ),
+    return Container(
+      color: config.backgroundColor,
+      width: config.width,
+      height: config.height,
+      child: VeVodPlayerBody(controller: controller, playerView: vodPlayerView),
     );
   }
 
@@ -180,14 +145,14 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   /// 播放源
   final TTVideoEngineMediaSource source;
 
-  /// 播放源ID
-  String? get uniqueId => source.getUniqueId;
-
   /// 视频播放器[VeVodPlayer]配置
   final VeVodPlayerConfig config;
 
   /// 视频播放控制器[VeVodPlayerControls]配置
   final VeVodPlayerControlsConfig controlsConfig;
+
+  /// 播放源ID
+  String? get uniqueId => source.getUniqueId;
 
   /// 创建 [VodPlayerFlutter] 实例
   final VodPlayerFlutter _vodPlayer = VodPlayerFlutter();
@@ -198,9 +163,8 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   /// 是否为首次初始化
   bool _isFirstInit = true;
 
-  /// 播放器视图
-  TTVideoPlayerView? _vodPlayerView;
-  int viewId = 0;
+  /// 播放器视图id
+  int viewId = -1;
 
   /// 本机视图类型，仅支持Android端
   NativeViewType _nativeViewType = NativeViewType.TextureView;
@@ -224,22 +188,22 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
       .dependOnInheritedWidgetOfExactType<VeVodPlayerInherited>()!
       .controller;
 
-  /// 执行初始化操作
-  Future<void> _init() async {
+  /// 执行初始化[VodPlayerFlutter]操作
+  Future<void> _initVodPlayer() async {
     /// 是否开启常亮模式
     if (!config.allowedScreenSleep) await WakelockPlus.enable();
-
-    /// 设置监听
-    _listener();
 
     /// 创建播放器
     await _vodPlayer.createPlayer();
 
+    /// 设置监听
+    _listener();
+
     /// 设置 HTTP Header
     await _setCustomHeader(config.httpHeaders);
 
-    /// 构建视图
-    _setView();
+    /// 设置[TTVideoPlayerView.nativeViewType]
+    _nativeViewType = NativeViewType.TextureView;
 
     /// 设置播放源
     await _vodPlayer.setMediaSource(source);
@@ -262,18 +226,18 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     if (config.fullScreenAtStartUp) addListener(_fullScreenListener);
   }
 
-  /// 构建播放视图
-  void _setView() {
-    _nativeViewType = NativeViewType.TextureView;
-    final TTVideoPlayerView view = TTVideoPlayerView(
-      nativeViewType: _nativeViewType,
-      onPlatformViewCreated: (int viewId) {
-        if (!value.isFullScreen) this.viewId = viewId;
-        _vodPlayer.setPlayerContainerView(viewId);
-      },
-    );
-    _vodPlayerView = view;
-    notifyListeners();
+  /// 执行初始化[TTVideoPlayerView]操作
+  Future<void> _init(int viewId) async {
+    /// 存储viewId
+    if (!value.isFullScreen) this.viewId = viewId;
+
+    /// 设置viewId
+    await _setPlayerContainerView(viewId);
+  }
+
+  /// 设置[viewId]
+  Future<void> _setPlayerContainerView(int viewId) async {
+    await _vodPlayer.setPlayerContainerView(viewId);
   }
 
   /// 设置播放请求中的自定义 HTTP Header
@@ -446,9 +410,20 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
     value = value.copyWith(isFullScreen: isFullScreen ?? !value.isFullScreen);
     _fullScreenStream.add(value.isFullScreen);
+  }
 
-    /// 恢复播放
-    if (!value.isFullScreen) _vodPlayer.setPlayerContainerView(viewId);
+  /// 屏幕旋转
+  Future<void> _toggleOrientations() async {
+    await SystemChrome.setPreferredOrientations(<DeviceOrientation>[]);
+    if (value.isFullScreen) {
+      /// 进入全屏模式
+      await SystemChrome.setPreferredOrientations(orientations);
+    } else {
+      /// 退出全屏模式
+      await SystemChrome.setPreferredOrientations(
+        config.orientationsExitFullScreen,
+      );
+    }
   }
 
   /// 初始全屏转换监听
