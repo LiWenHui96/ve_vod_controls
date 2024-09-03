@@ -10,14 +10,12 @@ class VeVodPlayerControls extends StatefulWidget {
     super.key,
     required this.controller,
     required this.value,
-    required this.size,
   });
 
   /// 构造
   static ChangeNotifierProvider<VeVodPlayerControlsController> structure(
     VeVodPlayerController controller, {
     required VeVodPlayerValue value,
-    required Size size,
   }) {
     return ChangeNotifierProvider<VeVodPlayerControlsController>(
       key: Key('VeVodPlayerControlsController_${controller.hashCode}'),
@@ -26,11 +24,7 @@ class VeVodPlayerControls extends StatefulWidget {
         isVisible: value.isFullScreen,
         needTimer: value.isPlaying,
       ),
-      child: VeVodPlayerControls(
-        controller: controller,
-        value: value,
-        size: size,
-      ),
+      child: VeVodPlayerControls(controller: controller, value: value),
     );
   }
 
@@ -39,9 +33,6 @@ class VeVodPlayerControls extends StatefulWidget {
 
   /// 播放数据
   final VeVodPlayerValue value;
-
-  /// 尺寸范围
-  final Size size;
 
   @override
   State<VeVodPlayerControls> createState() => _VeVodPlayerControlsState();
@@ -163,7 +154,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
 
     return Stack(
       children: <Widget>[
-        VeVodPlayerSafeArea(size: widget.size, child: _buildTooltip),
+        VeVodPlayerSafeArea(child: _buildTooltip),
         child,
         _buildOperation,
       ],
@@ -193,7 +184,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
       );
     }
 
-    return VeVodPlayerSafeArea(size: widget.size, child: Center(child: child));
+    return VeVodPlayerSafeArea(child: Center(child: child));
   }
 
   /// 提示组件

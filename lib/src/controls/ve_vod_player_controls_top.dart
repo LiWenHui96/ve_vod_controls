@@ -56,7 +56,7 @@ class VeVodPlayerControlsTop extends StatelessWidget {
           colors: config.backgroundColor,
         ),
       ),
-      child: SafeArea(bottom: false, child: child),
+      child: VeVodPlayerSafeArea(bottom: false, child: child),
     );
   }
 

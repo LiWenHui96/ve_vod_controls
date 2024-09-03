@@ -124,11 +124,7 @@ class VeVodPlayerControlsBottom extends StatelessWidget {
           colors: config.backgroundColor,
         ),
       ),
-      child: SafeArea(
-        top: false,
-        bottom: orientation == Orientation.portrait && value.isFullScreen,
-        child: child,
-      ),
+      child: VeVodPlayerSafeArea(top: false, child: child),
     );
   }
 }

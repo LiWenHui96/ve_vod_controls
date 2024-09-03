@@ -76,7 +76,10 @@ class _VeVodPlayerState extends State<VeVodPlayer> {
   Future<void> _listener(bool isFullScreen) async {
     if (isFullScreen) {
       final PageRouteBuilder<dynamic> route = PageRouteBuilder<dynamic>(
-        pageBuilder: (_, __, ___) => VeVodPlayerFull(controller: controller),
+        pageBuilder: (_, Animation<double> animation, ___) => AnimatedBuilder(
+          animation: animation,
+          builder: (_, __) => VeVodPlayerFull(controller: controller),
+        ),
         transitionsBuilder: (_, Animation<double> animation, __, Widget child) {
           final CurvedAnimation parent =
               CurvedAnimation(parent: animation, curve: Curves.fastOutSlowIn);
@@ -457,16 +460,11 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     value = value.copyWith(duration: duration);
   }
 
-  /// 获取播放进度
+  /// 获取播放进度/已缓冲的播放进度
   Future<void> _getPosition() async {
     final Duration position = await _vodPlayer.position;
-    value = value.copyWith(position: position);
-  }
-
-  /// 获取已缓冲的播放进度
-  Future<void> _getPlayable() async {
     final Duration buffered = await _vodPlayer.playableDuration;
-    value = value.copyWith(buffered: buffered);
+    value = value.copyWith(position: position, buffered: buffered);
   }
 
   /// 获取视频尺寸
@@ -604,11 +602,8 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     _timer = Timer.periodic(Durations.long2, (Timer timer) async {
       if (!timer.isActive) return;
 
-      /// 获取播放进度
+      /// 获取播放进度/已缓冲的播放进度
       await _getPosition();
-
-      /// 获取已缓冲的播放时长
-      await _getPlayable();
 
       /// 试看判断
       await _getMaxPreviewTimeState();
@@ -965,42 +960,103 @@ class VeVodPlayerInherited extends InheritedWidget {
 }
 
 /// 安全区域
-class VeVodPlayerSafeArea extends StatelessWidget {
+class VeVodPlayerSafeArea extends StatefulWidget {
   const VeVodPlayerSafeArea({
     super.key,
-    required this.size,
+    this.left = true,
+    this.top = true,
+    this.right = true,
+    this.bottom = true,
+    this.minimum = EdgeInsets.zero,
+    this.maintainBottomViewPadding = false,
     required this.child,
   });
 
-  /// 实际尺寸
-  final Size size;
+  /// Whether to avoid system intrusions on the left.
+  final bool left;
+
+  /// Whether to avoid system intrusions at the top of the screen, typically the
+  /// system status bar.
+  final bool top;
+
+  /// Whether to avoid system intrusions on the right.
+  final bool right;
+
+  /// Whether to avoid system intrusions on the bottom side of the screen.
+  final bool bottom;
+
+  /// This minimum padding to apply.
+  ///
+  /// The greater of the minimum insets and the media padding will be applied.
+  final EdgeInsets minimum;
+
+  /// Specifies whether the [SafeArea] should maintain the bottom
+  /// [MediaQueryData.viewPadding] instead of the bottom
+  /// [MediaQueryData.padding],
+  /// defaults to false.
+  ///
+  /// For example, if there is an onscreen keyboard displayed above the
+  /// SafeArea, the padding can be maintained below the obstruction rather than
+  /// being consumed. This can be helpful in cases where your layout contains
+  /// flexible widgets, which could visibly move when opening a software
+  /// keyboard due to the change in the padding value. Setting this to true will
+  /// avoid the UI shift.
+  final bool maintainBottomViewPadding;
 
   /// 子组件
   final Widget child;
+
+  @override
+  State<VeVodPlayerSafeArea> createState() => _VeVodPlayerSafeAreaState();
+}
+
+class _VeVodPlayerSafeAreaState extends State<VeVodPlayerSafeArea> {
+  /// 视图尺寸
+  Size size = Size.zero;
+
+  /// 距屏幕左上角的距离
+  Offset topOffset = Offset.zero;
+
+  /// 距屏幕左下角的距离
+  Offset bottomOffset = Offset.zero;
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+      if (renderBox == null) return;
+
+      /// 屏幕尺寸
+      final Size screenSize = MediaQuery.sizeOf(context);
+
+      setState(() {
+        size = renderBox.size;
+        topOffset = renderBox.localToGlobal(Offset.zero);
+        bottomOffset = renderBox.localToGlobal(Offset(0, size.height)) -
+            Offset(0, screenSize.height);
+      });
+    });
+
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     /// 屏幕方向
     final Orientation orientation = MediaQuery.orientationOf(context);
 
-    /// 距离顶部的高度
-    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
-    final double targetDy = renderBox != null && renderBox.hasSize
-        ? renderBox.localToGlobal(Offset.zero).dy
-        : 0;
-
-    /// 屏幕尺寸
-    final Size screenSize = MediaQuery.sizeOf(context);
-
     return SafeArea(
-      left: orientation == Orientation.landscape &&
-          screenSize.width == size.width,
-      top: orientation == Orientation.portrait && targetDy == 0,
-      right: orientation == Orientation.landscape &&
-          screenSize.width == size.width,
-      bottom: orientation == Orientation.portrait &&
-          screenSize.height == size.height,
-      child: child,
+      left: widget.left,
+      top: widget.top &&
+          orientation == Orientation.portrait &&
+          topOffset.dy <= 0,
+      right: widget.right,
+      bottom: widget.bottom &&
+          orientation == Orientation.portrait &&
+          bottomOffset.dy >= 0,
+      minimum: widget.minimum,
+      maintainBottomViewPadding: widget.maintainBottomViewPadding,
+      child: widget.child,
     );
   }
 }

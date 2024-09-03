@@ -83,57 +83,45 @@ class _VeVodPlayerBodyState extends State<VeVodPlayerBody>
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        final Size screenSize = MediaQuery.sizeOf(context);
-        final double width = constraints.constrainWidth(screenSize.width);
-        final double height = constraints.constrainHeight(screenSize.height);
-        final Size size = Size(width, height);
+    final Widget child = InteractiveViewer(
+      maxScale: config.maxScale,
+      minScale: config.minScale,
+      panEnabled: config.panEnabled,
+      scaleEnabled: config.scaleEnabled,
+      child: SizedBox(child: widget.playerView),
+    );
 
-        final Widget child = VeVodPlayerSafeArea(
-          size: size,
-          child: InteractiveViewer(
-            maxScale: config.maxScale,
-            minScale: config.minScale,
-            panEnabled: config.panEnabled,
-            scaleEnabled: config.scaleEnabled,
-            child: SizedBox(child: widget.playerView),
+    return Stack(
+      children: <Widget>[
+        Hero(
+          tag: 'Ve_Vod_Player_Body_${controller.hashCode}',
+          child: VeVodPlayerSafeArea(child: child),
+        ),
+        VeVodPlayerInherited(
+          controller: controller,
+          child: ChangeNotifierProvider<VeVodPlayerController>.value(
+            value: controller,
+            builder: (_, __) => _buildControls,
           ),
-        );
-
-        return SizedBox.fromSize(
-          size: size,
-          child: Stack(
-            children: <Widget>[
-              child,
-              VeVodPlayerInherited(
-                controller: controller,
-                child: ChangeNotifierProvider<VeVodPlayerController>.value(
-                  value: controller,
-                  builder: (_, __) => _buildControls(size),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+        ),
+      ],
     );
   }
 
   /// 控制器 + 遮罩层
-  Widget _buildControls(Size size) {
+  Widget get _buildControls {
     return Selector<VeVodPlayerController, VeVodPlayerValue>(
       builder: (_, VeVodPlayerValue value, __) {
         final List<Widget>? overlay = config.overlayBuilder
             ?.call(context, controller, value)
-            ?.map((_) => VeVodPlayerSafeArea(size: size, child: _))
+            ?.map((_) => VeVodPlayerSafeArea(child: _))
             .toList();
 
         return Stack(
           alignment: Alignment.center,
           children: <Widget>[
             ...?overlay,
-            VeVodPlayerControls.structure(controller, value: value, size: size),
+            VeVodPlayerControls.structure(controller, value: value),
           ],
         );
       },
