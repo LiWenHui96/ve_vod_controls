@@ -151,7 +151,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
       child: child,
     );
 
-    /// [showOrHide] 方法不受锁定的限制
+    /// [toggleVisible] 方法不受锁定的限制
     child = GestureDetector(onTap: toggleVisible, child: child);
 
     return Stack(
@@ -285,6 +285,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
         !config.allowLongPress ||
         !value.isPlaying ||
         value.isMaxPlaybackSpeed) {
+      toggleVisible(visible: true);
       return;
     }
 
@@ -304,7 +305,10 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
     if (!allowPressed ||
         !config.allowVolumeOrBrightness ||
         value.isCompleted ||
-        value.isDragVertical) return;
+        value.isDragVertical) {
+      toggleVisible(visible: true);
+      return;
+    }
 
     final DragVerticalType type = details.globalPosition.dx < totalWidth / 2
         ? DragVerticalType.brightness
@@ -346,6 +350,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
         !config.allowProgress ||
         value.isCompleted ||
         value.isDragProgress) {
+      toggleVisible(visible: true);
       return;
     }
 

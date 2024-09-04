@@ -55,9 +55,7 @@ class ControlsSpeed extends StatelessWidget {
     required VeVodPlayerControlsConfig config,
     ValueChanged<double>? onChanged,
   }) async {
-    final Size size = MediaQuery.sizeOf(context);
-    final double width = size.width * .15;
-    final double height = size.height;
+    final double height = MediaQuery.sizeOf(context).height;
 
     const double itemHeight = 45;
     final bool isMax = height >= itemHeight * speeds.length;
@@ -110,17 +108,14 @@ class ControlsSpeed extends StatelessWidget {
           );
         }
 
+        child = SafeArea(left: false, top: false, bottom: false, child: child);
+
         return Dialog(
           backgroundColor: config.toolTipBackgroundColor,
           insetPadding: EdgeInsets.zero,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.horizontal(left: Radius.circular(12)),
-          ),
+          shape: const RoundedRectangleBorder(),
           alignment: Alignment.centerRight,
-          child: SizedBox.fromSize(
-            size: Size(width, height),
-            child: child,
-          ),
+          child: SizedBox.fromSize(size: Size(0, height), child: child),
         );
       },
     );
