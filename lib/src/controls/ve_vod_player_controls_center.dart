@@ -24,7 +24,7 @@ class VeVodPlayerControlsCenter extends StatelessWidget {
         color: config.foregroundColor,
         onLock: () {
           onVisible?.call();
-          controller.toggleLock();
+          controller._toggleLock();
         },
       );
     }

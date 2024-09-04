@@ -364,7 +364,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   }
 
   /// 重置屏幕亮度
-  Future<void> resetScreenBrightness() => _brightness.resetScreenBrightness();
+  Future<void> _resetScreenBrightness() => _brightness.resetScreenBrightness();
 
   /// 设置是否正在调整显示亮度或音量
   void _setDragVertical(
@@ -446,7 +446,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   }
 
   /// 切换 锁定状态
-  void toggleLock() {
+  void _toggleLock() {
     if (!value.isInitialized) return;
 
     value = value.copyWith(isLock: !value.isLock);
@@ -640,7 +640,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     _fullScreenStream.close();
 
     /// 重置屏幕亮度
-    resetScreenBrightness();
+    _resetScreenBrightness();
 
     /// 是否关闭常亮模式
     if (!config.allowedScreenSleep) WakelockPlus.disable();
