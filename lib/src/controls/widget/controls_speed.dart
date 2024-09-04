@@ -74,7 +74,6 @@ class ControlsSpeed extends StatelessWidget {
             Widget child = Text(
               'x$speed',
               style: config.defaultTextStyle.copyWith(
-                fontSize: 14,
                 color: isSelected ? Theme.of(context).primaryColor : null,
               ),
             );

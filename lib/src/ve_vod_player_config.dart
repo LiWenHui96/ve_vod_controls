@@ -144,7 +144,7 @@ class VeVodPlayerControlsConfig {
     ],
     this.toolTipBackgroundColor = const Color(0xB3000000),
     this.foregroundColor = Colors.white,
-    this.textSize = 12,
+    this.textSize = 14,
     this.textStyle,
     this.iconSize = 24,
     this.hasBackButton = true,
@@ -187,7 +187,7 @@ class VeVodPlayerControlsConfig {
 
   /// 文本字体大小
   ///
-  /// 默认为12
+  /// 默认为14
   final double textSize;
 
   /// 文本样式
