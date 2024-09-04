@@ -142,7 +142,7 @@ class VeVodPlayerControlsConfig {
       Color.fromRGBO(0, 0, 0, .4),
       Color.fromRGBO(0, 0, 0, 0),
     ],
-    this.toolTipBackgroundColor = Colors.black54,
+    this.toolTipBackgroundColor = const Color(0xB3000000),
     this.foregroundColor = Colors.white,
     this.textSize = 12,
     this.textStyle,
@@ -177,7 +177,7 @@ class VeVodPlayerControlsConfig {
 
   /// 显示音量、亮度、播放速度、播放进度等信息的小部件的背景颜色
   ///
-  /// 默认为[Colors.black54]
+  /// 默认为Color(0xB3000000)/Colors.black.withOpacity(.7)
   final Color toolTipBackgroundColor;
 
   /// 按钮和文本等小部件的颜色。

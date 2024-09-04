@@ -177,6 +177,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
   /// 默认播放速度
   double _defaultPlaybackSpeed = 1;
+  Timer? _playbackSpeedTimer;
 
   /// 是否为用户暂停操作
   bool _isPauseByUser = false;
@@ -320,23 +321,36 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   /// 设置播放速度
   ///
   /// 默认为[_defaultPlaybackSpeed]
-  Future<void> setPlaybackSpeed({double? speed}) async {
+  Future<void> setPlaybackSpeed({double? speed, bool hasTimer = false}) async {
     speed ??= _defaultPlaybackSpeed;
 
     /// 限制倍速范围
     if (speed <= 0 || speed > maxPlaybackSpeed) return;
 
-    /// 记录默认播放速度
-    if (speed == maxPlaybackSpeed) {
-      _defaultPlaybackSpeed = value.playbackSpeed;
+    /// 当 `_playbackSpeedTimer` 存在，且处于活跃状态时，注销计时器
+    if (_playbackSpeedTimer != null && _playbackSpeedTimer!.isActive) {
+      _cancelPlaybackSpeedTimer();
+    }
+
+    if (hasTimer) {
+      _playbackSpeedTimer = Timer.periodic(Durations.extralong4 * 2, (_) async {
+        value = value.copyWith(isPlaybackSpeed: false);
+        _cancelPlaybackSpeedTimer();
+      });
     } else {
-      _defaultPlaybackSpeed = 1.0;
+      /// 记录默认播放速度
+      if (speed == maxPlaybackSpeed) {
+        _defaultPlaybackSpeed = value.playbackSpeed;
+      } else {
+        _defaultPlaybackSpeed = 1.0;
+      }
     }
 
     await _vodPlayer.setPlaybackSpeed(speed);
     value = value.copyWith(
       playbackSpeed: speed,
-      isMaxPlaybackSpeed: speed == maxPlaybackSpeed,
+      isPlaybackSpeed: hasTimer,
+      isMaxPlaybackSpeed: !hasTimer && speed == maxPlaybackSpeed,
     );
   }
 
@@ -616,8 +630,17 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     _timer = null;
   }
 
+  /// 注销[_playbackSpeedTimer]
+  void _cancelPlaybackSpeedTimer() {
+    _playbackSpeedTimer?.cancel();
+    _playbackSpeedTimer = null;
+  }
+
   /// 最大播放速度
   double get maxPlaybackSpeed => 3;
+
+  /// 播放速度档位
+  List<double> get playbackSpeeds => <double>[.5, 1, 1.5, 2, 3];
 
   @override
   void notifyListeners() {
@@ -635,6 +658,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
     /// 注销计时器
     _cancelTimer();
+    _cancelPlaybackSpeedTimer();
 
     /// 释放监听器
     _fullScreenStream.close();
@@ -666,6 +690,7 @@ class VeVodPlayerValue {
     this.isFullScreen = false,
     this.isMaxPreviewTime = false,
     this.playbackSpeed = 1.0,
+    this.isPlaybackSpeed = false,
     this.isMaxPlaybackSpeed = false,
     this.resolution =
         TTVideoEngineResolutionType.TTVideoEngineResolutionTypeABRAuto,
@@ -727,6 +752,9 @@ class VeVodPlayerValue {
 
   /// 当前播放速度
   final double playbackSpeed;
+
+  /// 是否显示当前播放速度
+  final bool isPlaybackSpeed;
 
   /// 是否以最大速率播放视频
   final bool isMaxPlaybackSpeed;
@@ -821,6 +849,7 @@ class VeVodPlayerValue {
     bool? isFullScreen,
     bool? isMaxPreviewTime,
     double? playbackSpeed,
+    bool? isPlaybackSpeed,
     bool? isMaxPlaybackSpeed,
     TTVideoEngineResolutionType? resolution,
     List<TTVideoEngineResolutionType>? resolutions,
@@ -848,6 +877,7 @@ class VeVodPlayerValue {
       isFullScreen: isFullScreen ?? this.isFullScreen,
       isMaxPreviewTime: isMaxPreviewTime ?? this.isMaxPreviewTime,
       playbackSpeed: playbackSpeed ?? this.playbackSpeed,
+      isPlaybackSpeed: isPlaybackSpeed ?? this.isPlaybackSpeed,
       isMaxPlaybackSpeed: isMaxPlaybackSpeed ?? this.isMaxPlaybackSpeed,
       resolution: resolution ?? this.resolution,
       resolutions: resolutions ?? this.resolutions,
@@ -880,6 +910,7 @@ class VeVodPlayerValue {
         'isFullScreen: $isFullScreen, '
         'isMaxPreviewTime: $isMaxPreviewTime, '
         'playbackSpeed: $playbackSpeed, '
+        'isPlaybackSpeed: $isPlaybackSpeed, '
         'isMaxPlaybackSpeed: $isMaxPlaybackSpeed, '
         'resolution: $resolution, '
         'resolutions: $resolutions, '
@@ -911,6 +942,7 @@ class VeVodPlayerValue {
           isFullScreen == other.isFullScreen &&
           isMaxPreviewTime == other.isMaxPreviewTime &&
           playbackSpeed == other.playbackSpeed &&
+          isPlaybackSpeed == other.isPlaybackSpeed &&
           isMaxPlaybackSpeed == other.isMaxPlaybackSpeed &&
           resolution == other.resolution &&
           resolutions == other.resolutions &&
@@ -934,7 +966,7 @@ class VeVodPlayerValue {
         isLooping,
         isFullScreen,
         isMaxPreviewTime,
-        Object.hash(playbackSpeed, isMaxPlaybackSpeed),
+        Object.hash(playbackSpeed, isPlaybackSpeed, isMaxPlaybackSpeed),
         Object.hash(resolution, resolutions),
         Object.hash(isDragVertical, dragVerticalType, dragVerticalValue),
         Object.hash(isDragProgress, dragDuration),

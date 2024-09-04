@@ -25,6 +25,7 @@ part 'src/controls/widget/controls_lock.dart';
 part 'src/controls/widget/controls_marquee.dart';
 part 'src/controls/widget/controls_max_playback.dart';
 part 'src/controls/widget/controls_play_pause.dart';
+part 'src/controls/widget/controls_speed.dart';
 part 'src/controls/widget/controls_vertical.dart';
 part 'src/ve_vod_controls.dart';
 part 'src/ve_vod_player.dart';

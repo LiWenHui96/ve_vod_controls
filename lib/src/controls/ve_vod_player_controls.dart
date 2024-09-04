@@ -84,15 +84,17 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
         Visibility(
           visible: value.allowControlsBottom,
           child: VeVodPlayerControlsBottom(
+            onImmVisible: () =>
+                _controlsController.toggleImmVisible(visible: false),
+            onVisible: () => toggleVisible(visible: false),
             onPlayOrPause: togglePlayPause,
             onDragStart: onHorizontalDragStart,
             onDragUpdate: onDragUpdate,
             onDragEnd: onHorizontalDragEnd,
             onTapUp: onTapUp,
-            onFullScreen: () {
-              _controlsController.toggleImmVisible(visible: false);
-              controller.toggleFullScreen();
-            },
+            onSpeed: (_) =>
+                controller.setPlaybackSpeed(speed: _, hasTimer: true),
+            onFullScreen: controller.toggleFullScreen,
           ),
         ),
       ],
@@ -241,6 +243,10 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
 
     if (value.isBuffering) {
       child = Text('正在缓冲...', style: config.defaultTextStyle);
+    }
+
+    if (value.isPlaybackSpeed) {
+      child = Text('x${value.playbackSpeed}', style: config.defaultTextStyle);
     }
 
     return background(child: child);

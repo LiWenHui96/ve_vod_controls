@@ -8,13 +8,22 @@ part of ve_vod_controls;
 class VeVodPlayerControlsBottom extends StatelessWidget {
   const VeVodPlayerControlsBottom({
     super.key,
+    required this.onImmVisible,
+    required this.onVisible,
     required this.onPlayOrPause,
     required this.onDragStart,
     required this.onDragUpdate,
     required this.onDragEnd,
     required this.onTapUp,
+    required this.onSpeed,
     required this.onFullScreen,
   });
+
+  /// 即刻隐蔽控制器
+  final VoidCallback? onImmVisible;
+
+  /// 隐蔽控制器
+  final VoidCallback? onVisible;
 
   /// 播放/暂停 视频
   final VoidCallback? onPlayOrPause;
@@ -30,6 +39,9 @@ class VeVodPlayerControlsBottom extends StatelessWidget {
 
   /// 点击进度条更改视频播放进度
   final ValueChanged<double> onTapUp;
+
+  /// 播放速度变化
+  final ValueChanged<double>? onSpeed;
 
   /// 启用/禁用全屏模式
   final VoidCallback? onFullScreen;
@@ -70,7 +82,10 @@ class VeVodPlayerControlsBottom extends StatelessWidget {
       visualDensity: VisualDensity.comfortable,
       padding: EdgeInsets.zero,
       color: config.foregroundColor,
-      onPressed: onFullScreen,
+      onPressed: () {
+        onImmVisible?.call();
+        onFullScreen?.call();
+      },
       enableFeedback: true,
       isSelected: value.isFullScreen,
       selectedIcon: const Icon(Icons.fullscreen_exit),
@@ -86,6 +101,13 @@ class VeVodPlayerControlsBottom extends StatelessWidget {
     final Orientation orientation = MediaQuery.orientationOf(context);
 
     if (orientation == Orientation.landscape) {
+      /// 播放进度
+      final Widget speedButton = ControlsSpeed(
+        speed: value.playbackSpeed,
+        onChanged: onSpeed,
+        onVisible: onVisible,
+      );
+
       child = Row(children: <Widget>[duration, Expanded(child: child)]);
 
       child = Column(
@@ -93,7 +115,16 @@ class VeVodPlayerControlsBottom extends StatelessWidget {
           Padding(padding: const EdgeInsets.fromLTRB(8, 8, 8, 0), child: child),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[playPause, fullScreenButton],
+            children: <Widget>[
+              playPause,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  if (value.isFullScreen) speedButton,
+                  fullScreenButton,
+                ],
+              ),
+            ],
           ),
         ],
       );
