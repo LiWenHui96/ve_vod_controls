@@ -1,13 +1,13 @@
 name: ve_vod_controls
-description: "The Flutter plugin providers volcengine tt sdk native APIs to implement video player. 集成火山云视频点播原生SDK。"
-version: 0.0.1
+description: "基于ve_vod封装的视频播放器，携带控制器"
+version: 1.0.0
 homepage: https://github.com/LiWenHui96
 repository: https://github.com/LiWenHui96/ve_vod_controls
 issue_tracker: https://github.com/LiWenHui96/ve_vod_controls/issues
 topics:
   - 火山云
-  - TTSDK
   - video
+  - controls
 
 environment:
   sdk: '>=2.17.0 <4.0.0'
