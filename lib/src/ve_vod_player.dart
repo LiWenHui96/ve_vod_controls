@@ -39,9 +39,6 @@ class _VeVodPlayerState extends State<VeVodPlayer> {
 
   @override
   void initState() {
-    /// 初始化
-    controller._initVodPlayer();
-
     /// 全屏相关
     _fullScreenStream = controller._fullScreenStream.stream.listen(_listener);
 
@@ -77,7 +74,6 @@ class _VeVodPlayerState extends State<VeVodPlayer> {
   @override
   void dispose() {
     _fullScreenStream?.cancel();
-    controller.dispose();
 
     super.dispose();
   }
@@ -132,17 +128,24 @@ class _VeVodPlayerState extends State<VeVodPlayer> {
     );
 
     if (controller._isFullScreen) {
-      return PopScope(
-        onPopInvoked: (bool didPop) {
-          if (didPop) return;
-          if (controller.value.isFullScreen) {
-            controller.toggleFullScreen(isFullScreen: false);
-          } else {
-            Navigator.pop(context);
-          }
-        },
-        canPop: false,
-        child: child,
+      return ChangeNotifierProvider<VeVodPlayerController>.value(
+        value: controller,
+        builder: (_, __) => Selector<VeVodPlayerController, bool>(
+          builder: (_, bool isFullScreen, Widget? child) {
+            return PopScope(
+              onPopInvoked: (bool didPop) {
+                if (didPop) return;
+                if (isFullScreen) {
+                  controller.toggleFullScreen(isFullScreen: false);
+                }
+              },
+              canPop: !isFullScreen,
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
+          selector: (_, __) => __.value.isFullScreen,
+          child: child,
+        ),
       );
     }
 
@@ -175,7 +178,9 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     VeVodPlayerControlsConfig? controlsConfig,
   })  : config = config ?? VeVodPlayerConfig(),
         controlsConfig = controlsConfig ?? VeVodPlayerControlsConfig(),
-        super(const VeVodPlayerValue.uninitialized());
+        super(const VeVodPlayerValue.uninitialized()) {
+    _initVodPlayer();
+  }
 
   /// 播放源
   final TTVideoEngineMediaSource source;

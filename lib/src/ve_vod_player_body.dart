@@ -95,7 +95,7 @@ class _VeVodPlayerBodyState extends State<VeVodPlayerBody>
       children: <Widget>[
         Hero(
           tag: 'Ve_Vod_Player_Body_${controller.hashCode}',
-          child: VeVodPlayerSafeArea(child: child),
+          child: child,
         ),
         VeVodPlayerInherited(
           controller: controller,
