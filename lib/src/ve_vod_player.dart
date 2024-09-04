@@ -127,8 +127,8 @@ class _VeVodPlayerState extends State<VeVodPlayer> {
 ///
 /// 包含资源数据、配置文件
 ///
-/// 实现 创建播放器、设置播放源 等基础功能，以及播放控制、设置填充模式、设置旋转角度、
-/// 设置镜像模式、设置循环播放、设置倍速播放、设置自定义Header、静音、调节音量、设置业务类型、
+/// 实现 创建播放器、设置播放源 等基础功能，以及播放控制、设置自定义Header、设置填充模式、
+/// 设置旋转角度、设置镜像模式、设置循环播放、设置倍速播放、静音、调节音量、设置业务类型、
 /// 设置自定义标签、设置清晰度、播放私有加密视频、获取播放信息、播放状态回调 功能
 ///
 /// 后续支持高阶功能
@@ -218,6 +218,11 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
       /// 设置是否循环播放
       setLooping(config.looping),
+
+      /// 设置填充模式
+      setScalingMode(
+        TTVideoEngineScalingMode.TTVideoEngineScalingModeAspectFit,
+      ),
     ]);
 
     if (config.autoInitialize || config.autoPlay) {
@@ -244,14 +249,6 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     await _vodPlayer.setPlayerContainerView(viewId);
   }
 
-  /// 设置播放请求中的自定义 HTTP Header
-  Future<void> _setCustomHeader(Map<String, String>? map) async {
-    if (map == null || map.isEmpty) return;
-    final Iterable<Future<void>> futures =
-        map.entries.map((_) => _vodPlayer.setCustomHeader(_.key, _.value));
-    await Future.wait(futures);
-  }
-
   /// 播放
   Future<void> play() async {
     /// 当存在异常时，跳转到异常位置
@@ -268,12 +265,6 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   /// 停止
   Future<void> stop() async {
     await _vodPlayer.stop();
-  }
-
-  /// 设置是否循环播放
-  Future<void> setLooping(bool looping) async {
-    await _vodPlayer.setLooping(looping);
-    value = value.copyWith(isLooping: looping);
   }
 
   /// 将起播位置设置为[moment]
@@ -318,6 +309,45 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     );
   }
 
+  /// 设置播放请求中的自定义 HTTP Header
+  Future<void> _setCustomHeader(Map<String, String>? map) async {
+    if (map == null || map.isEmpty) return;
+    final Iterable<Future<void>> futures =
+        map.entries.map((_) => _vodPlayer.setCustomHeader(_.key, _.value));
+    await Future.wait(futures);
+  }
+
+  /// 设置填充模式
+  /// TTVideoEngineScalingModeNone: 无拉伸，不会有变形，可能有黑边
+  /// TTVideoEngineScalingModeAspectFit: 等比例适配，不会有变形，按照视频宽高等比适配画面，可能有黑边
+  /// TTVideoEngineScalingModeAspectFill: 等比例填充，不会有变形，按照视频宽高等比充满画面，可能有画面裁切
+  /// TTVideoEngineScalingModeFill: 拉伸填充，视频宽高比例与画面比例不一致，会导致画面变形
+  Future<void> setScalingMode(TTVideoEngineScalingMode mode) async {
+    await _vodPlayer.setScalingMode(mode);
+  }
+
+  /// 设置旋转方向
+  /// 可设为 0、90、180、270
+  Future<void> setRotation(int angle) async {
+    await _vodPlayer.setRotation(angle);
+  }
+
+  /// 开启/关闭水平镜像
+  Future<void> setMirrorHorizontal(bool mirror) async {
+    await _vodPlayer.setMirrorHorizontal(mirror);
+  }
+
+  /// 开启/关闭垂直镜像
+  Future<void> setMirrorVertical(bool mirror) async {
+    await _vodPlayer.setMirrorVertical(mirror);
+  }
+
+  /// 设置是否循环播放
+  Future<void> setLooping(bool looping) async {
+    await _vodPlayer.setLooping(looping);
+    value = value.copyWith(isLooping: looping);
+  }
+
   /// 设置播放速度
   ///
   /// 默认为[_defaultPlaybackSpeed]
@@ -357,6 +387,11 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   /// 设置最大播放速度
   void setMaxPlaybackSpeed() => setPlaybackSpeed(speed: maxPlaybackSpeed);
 
+  /// 静音播放
+  Future<void> setMuted(bool muted) async {
+    await _vodPlayer.setMuted(muted);
+  }
+
   /// 获取当前音量，默认使用左声道
   Future<double> get volume async {
     final TTVolume? volume = await _vodPlayer.getVolume();
@@ -367,6 +402,12 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   Future<void> setVolume(double volume) async {
     volume = clampDouble(volume, 0, 1);
     await _vodPlayer.setVolume(volume: TTVolume(left: volume, right: volume));
+  }
+
+  /// 设置纯音频播放
+  /// 仅高级版或企业版支持
+  Future<void> setRadioMode(bool radioMode) async {
+    await _vodPlayer.setRadioMode(radioMode);
   }
 
   /// 获取当前屏幕亮度
