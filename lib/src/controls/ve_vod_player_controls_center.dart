@@ -6,10 +6,10 @@
 part of ve_vod_controls;
 
 class VeVodPlayerControlsCenter extends StatelessWidget {
-  const VeVodPlayerControlsCenter({super.key, this.onShowControls});
+  const VeVodPlayerControlsCenter({super.key, this.onVisible});
 
   /// 用于显示控制器
-  final VoidCallback? onShowControls;
+  final VoidCallback? onVisible;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +23,7 @@ class VeVodPlayerControlsCenter extends StatelessWidget {
         allowLock: config.allowLock,
         color: config.foregroundColor,
         onLock: () {
-          onShowControls?.call();
+          onVisible?.call();
           controller.toggleLock();
         },
       );

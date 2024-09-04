@@ -255,8 +255,17 @@ class VeVodPlayerControlsConfig {
 
   /// 默认文本样式
   TextStyle get defaultTextStyle {
-    final TextStyle style =
-        TextStyle(fontSize: textSize, color: foregroundColor);
+    final TextStyle style = TextStyle(
+      fontSize: textSize,
+      color: foregroundColor,
+      shadows: const <Shadow>[
+        Shadow(
+          color: Colors.black54,
+          offset: Offset(4, 4),
+          blurRadius: 8,
+        ),
+      ],
+    );
     if (textStyle != null) return style.merge(textStyle);
     return style;
   }

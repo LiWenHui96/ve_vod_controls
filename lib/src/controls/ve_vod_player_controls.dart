@@ -58,7 +58,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
     _stream = controller._fullScreenStream.stream.listen((bool isFullScreen) {
       Future<void>.delayed(Durations.long2, () {
         _controlsController.toggleImmVisible(visible: true);
-        if (!isFullScreen) showOrHide(visible: true);
+        if (!isFullScreen) toggleVisible(visible: true);
       });
     });
 
@@ -115,7 +115,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
           child,
           if (!value.isCompleted && !value.isDragProgress && value.isFullScreen)
             VeVodPlayerControlsCenter(
-              onShowControls: () => showOrHide(visible: true),
+              onVisible: () => toggleVisible(visible: true),
             ),
         ],
       ),
@@ -150,7 +150,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
     );
 
     /// [showOrHide] 方法不受锁定的限制
-    child = GestureDetector(onTap: showOrHide, child: child);
+    child = GestureDetector(onTap: toggleVisible, child: child);
 
     return Stack(
       children: <Widget>[
@@ -247,7 +247,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
   }
 
   /// 显示/隐藏 控制器
-  void showOrHide({bool? visible, bool? needTimer}) {
+  void toggleVisible({bool? visible, bool? needTimer}) {
     needTimer ??= value.isPlaying;
     _controlsController
       .._cancelTimer()
@@ -269,7 +269,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
     /// 注销计时器，并开启显示
     await Future<void>.delayed(
       Durations.short1,
-      () => showOrHide(visible: true),
+      () => toggleVisible(visible: true),
     );
   }
 
@@ -283,7 +283,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
     }
 
     /// 隐藏
-    showOrHide(visible: false);
+    toggleVisible(visible: false);
     controller.setMaxPlaybackSpeed();
   }
 
@@ -344,7 +344,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
     }
 
     /// 显示
-    showOrHide(visible: true, needTimer: false);
+    toggleVisible(visible: true, needTimer: false);
     controller._setDragProgress(true);
   }
 
@@ -369,7 +369,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
     if (!value.isDragProgress) return;
 
     /// 显示
-    showOrHide(visible: true);
+    toggleVisible(visible: true);
 
     /// 设置播放进度，并关闭进度调节
     controller
