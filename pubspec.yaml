@@ -5,7 +5,7 @@ homepage: https://github.com/LiWenHui96
 repository: https://github.com/LiWenHui96/ve_vod_controls
 issue_tracker: https://github.com/LiWenHui96/ve_vod_controls/issues
 topics:
-  - 火山云
+  - volcengine
   - video
   - controls
 
@@ -20,7 +20,7 @@ dependencies:
   plugin_platform_interface: ^2.1.8
   provider: ^6.1.2
   screen_brightness: ^1.0.1
-  ve_vod: 1.42.3-2
+  ve_vod: ^1.42.3-2
   wakelock_plus: ^1.2.8
 
 dev_dependencies:

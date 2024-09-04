@@ -75,9 +75,9 @@ import 'package:ve_vod_controls/ve_vod_controls.dart';
 
 ```dart
 VeVodControls.instance.init(
-  appId: 'xxxxx',
+  appId: 'xx',
   licenseFilePath: 'assets/license/vod.lic',
-  appName: 'xxxxx',
+  appName: 'xx',
   appVersion: '1.0.0',
   appChannel: 'dev',
 );
