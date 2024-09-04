@@ -45,6 +45,16 @@ class _VeVodPlayerState extends State<VeVodPlayer> {
     /// 全屏相关
     _fullScreenStream = controller._fullScreenStream.stream.listen(_listener);
 
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+      if (renderBox == null) return;
+
+      /// 屏幕尺寸
+      final Size screenSize = MediaQuery.sizeOf(context);
+      controller._isFullScreen = screenSize == renderBox.size;
+      setState(() {});
+    });
+
     super.initState();
   }
 
@@ -74,6 +84,11 @@ class _VeVodPlayerState extends State<VeVodPlayer> {
 
   /// 全屏状态监听
   Future<void> _listener(bool isFullScreen) async {
+    if (controller._isFullScreen) {
+      unawaited(controller._toggleOrientations());
+      return;
+    }
+
     if (isFullScreen) {
       final PageRouteBuilder<dynamic> route = PageRouteBuilder<dynamic>(
         pageBuilder: (_, Animation<double> animation, ___) => AnimatedBuilder(
@@ -109,12 +124,29 @@ class _VeVodPlayerState extends State<VeVodPlayer> {
       onPlatformViewCreated: controller._init,
     );
 
-    return Container(
+    final Widget child = Container(
       color: config.backgroundColor,
       width: config.width,
       height: config.height,
       child: VeVodPlayerBody(controller: controller, playerView: vodPlayerView),
     );
+
+    if (controller._isFullScreen) {
+      return PopScope(
+        onPopInvoked: (bool didPop) {
+          if (didPop) return;
+          if (controller.value.isFullScreen) {
+            controller.toggleFullScreen(isFullScreen: false);
+          } else {
+            Navigator.pop(context);
+          }
+        },
+        canPop: false,
+        child: child,
+      );
+    }
+
+    return child;
   }
 
   VeVodPlayerConfig get config => controller.config;
@@ -185,6 +217,9 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   /// 监控全屏的状态变化
   final StreamController<bool> _fullScreenStream =
       StreamController<bool>.broadcast();
+
+  /// 是否占满屏幕
+  bool _isFullScreen = false;
 
   bool _isDisposed = false;
 
