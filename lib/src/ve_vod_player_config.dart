@@ -37,11 +37,13 @@ class VeVodPlayerConfig {
     this.maxPreviewTime,
     this.looping = false,
     this.overlayBuilder,
+    this.placeholderBuilder,
     this.fullScreenAtStartUp = false,
     this.orientationsEnterFullScreen,
     this.orientationsExitFullScreen = DeviceOrientation.values,
     this.hasControls = true,
     this.httpHeaders,
+    this.onChanged,
   });
 
   /// 控件最大宽度
@@ -105,8 +107,11 @@ class VeVodPlayerConfig {
   /// 默认为false
   final bool looping;
 
-  /// 放置在视频和控件之间的小部件
+  /// 放置在视频和控制器之间的小部件
   final VeVodPlayerBuilder<List<Widget>?>? overlayBuilder;
+
+  /// 放置在控制器之上的小部件
+  final VeVodPlayerBuilder<List<Widget>?>? placeholderBuilder;
 
   /// 是否在启动时开启全屏播放
   ///
@@ -126,6 +131,11 @@ class VeVodPlayerConfig {
 
   /// 自定义 Http Header
   final Map<String, String>? httpHeaders;
+
+  /// 进度监听
+  final ValueChanged<VeVodPlayerValue>? onChanged;
+
+  Size get size => Size(width ?? double.infinity, height ?? double.infinity);
 }
 
 /// 视频播放控制器[VeVodPlayerControls]配置

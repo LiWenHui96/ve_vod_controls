@@ -94,7 +94,10 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
             onTapUp: onTapUp,
             onSpeed: (_) =>
                 controller.setPlaybackSpeed(speed: _, hasTimer: true),
-            onFullScreen: controller.toggleFullScreen,
+            onFullScreen: () {
+              final bool flag = controller.toggleFullScreen();
+              if (!flag) _controlsController.toggleImmVisible(visible: true);
+            },
           ),
         ),
       ],

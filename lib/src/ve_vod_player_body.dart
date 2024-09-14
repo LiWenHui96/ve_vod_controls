@@ -9,14 +9,14 @@ class VeVodPlayerBody extends StatefulWidget {
   const VeVodPlayerBody({
     super.key,
     required this.controller,
-    required this.playerView,
+    required this.child,
   });
 
   /// {@macro ve.vod.controls.VodPlayerController}
   final VeVodPlayerController controller;
 
   /// 播放器视图
-  final TTVideoPlayerView playerView;
+  final Widget child;
 
   @override
   State<VeVodPlayerBody> createState() => _VeVodPlayerBodyState();
@@ -36,7 +36,8 @@ class _VeVodPlayerBodyState extends State<VeVodPlayerBody>
 
   @override
   void didChangeDependencies() {
-    VeVodPlayer.observer.subscribe(this, ModalRoute.of(context)!);
+    // ignore: always_specify_types
+    VeVodPlayer.observer.subscribe(this, ModalRoute.of(context)! as PageRoute);
 
     super.didChangeDependencies();
   }
@@ -88,15 +89,12 @@ class _VeVodPlayerBodyState extends State<VeVodPlayerBody>
       minScale: config.minScale,
       panEnabled: config.panEnabled,
       scaleEnabled: config.scaleEnabled,
-      child: SizedBox(child: widget.playerView),
+      child: widget.child,
     );
 
     return Stack(
       children: <Widget>[
-        Hero(
-          tag: 'Ve_Vod_Player_Body_${controller.hashCode}',
-          child: child,
-        ),
+        Hero(tag: 'Ve_Vod_Player_Body_${controller.hashCode}', child: child),
         VeVodPlayerInherited(
           controller: controller,
           child: ChangeNotifierProvider<VeVodPlayerController>.value(
@@ -114,14 +112,20 @@ class _VeVodPlayerBodyState extends State<VeVodPlayerBody>
       builder: (_, VeVodPlayerValue value, __) {
         final List<Widget>? overlay = config.overlayBuilder
             ?.call(context, controller, value)
-            ?.map((_) => VeVodPlayerSafeArea(child: _))
+            ?.map((_) => VeVodPlayerSafeArea(child: Center(child: _)))
+            .toList();
+
+        final List<Widget>? placeholder = config.placeholderBuilder
+            ?.call(context, controller, value)
+            ?.map((_) => VeVodPlayerSafeArea(child: Center(child: _)))
             .toList();
 
         return Stack(
-          alignment: Alignment.center,
+          fit: StackFit.expand,
           children: <Widget>[
             ...?overlay,
             VeVodPlayerControls.structure(controller, value: value),
+            ...?placeholder,
           ],
         );
       },
@@ -163,7 +167,7 @@ class _VeVodPlayerFullState extends State<VeVodPlayerFull> {
     final Widget child = Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: controller.config.backgroundColor,
-      body: VeVodPlayerBody(controller: controller, playerView: vodPlayerView),
+      body: VeVodPlayerBody(controller: controller, child: vodPlayerView),
     );
 
     return PopScope(

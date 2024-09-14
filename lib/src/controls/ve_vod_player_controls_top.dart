@@ -21,15 +21,7 @@ class VeVodPlayerControlsTop extends StatelessWidget {
     );
 
     final List<Widget> children = <Widget>[
-      IconButtonTheme(
-        data: IconButtonThemeData(
-          style: IconButton.styleFrom(
-            foregroundColor: config.foregroundColor,
-            iconSize: config.iconSize,
-          ),
-        ),
-        child: config.backButton ?? leading,
-      ),
+      config.backButton ?? leading,
       _buildTitle(context, config, value),
     ];
 
@@ -37,7 +29,15 @@ class VeVodPlayerControlsTop extends StatelessWidget {
         config.actionsBuilder?.call(context, controller, value);
     if (actions != null && actions.isNotEmpty) children.addAll(actions);
 
-    Widget child = Row(children: children);
+    Widget child = IconButtonTheme(
+      data: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: config.foregroundColor,
+          iconSize: config.iconSize,
+        ),
+      ),
+      child: Row(children: children),
+    );
 
     /// 屏幕方向
     final Orientation orientation = MediaQuery.orientationOf(context);

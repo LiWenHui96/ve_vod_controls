@@ -27,7 +27,7 @@ class VeVodPlayer extends StatefulWidget {
   ///   ],
   /// );
   // ignore: always_specify_types
-  static RouteObserver observer = RouteObserver();
+  static RouteObserver<PageRoute> observer = RouteObserver<PageRoute>();
 
   @override
   State<VeVodPlayer> createState() => _VeVodPlayerState();
@@ -41,16 +41,6 @@ class _VeVodPlayerState extends State<VeVodPlayer> {
   void initState() {
     /// 全屏相关
     _fullScreenStream = controller._fullScreenStream.stream.listen(_listener);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
-      if (renderBox == null) return;
-
-      /// 屏幕尺寸
-      final Size screenSize = MediaQuery.sizeOf(context);
-      controller._isFullScreen = screenSize == renderBox.size;
-      setState(() {});
-    });
 
     super.initState();
   }
@@ -80,7 +70,7 @@ class _VeVodPlayerState extends State<VeVodPlayer> {
 
   /// 全屏状态监听
   Future<void> _listener(bool isFullScreen) async {
-    if (controller._isFullScreen) {
+    if (controller._isFull) {
       unawaited(controller._toggleOrientations());
       return;
     }
@@ -120,36 +110,57 @@ class _VeVodPlayerState extends State<VeVodPlayer> {
       onPlatformViewCreated: controller._init,
     );
 
-    final Widget child = Container(
-      color: config.backgroundColor,
-      width: config.width,
-      height: config.height,
-      child: VeVodPlayerBody(controller: controller, playerView: vodPlayerView),
+    return _buildBody(
+      build: (bool useSafe) {
+        Widget child = vodPlayerView;
+
+        if (useSafe) child = VeVodPlayerSafeArea(child: child);
+
+        return Container(
+          color: config.backgroundColor,
+          width: config.width,
+          height: config.height,
+          child: VeVodPlayerBody(controller: controller, child: child),
+        );
+      },
     );
+  }
 
-    if (controller._isFullScreen) {
-      return ChangeNotifierProvider<VeVodPlayerController>.value(
-        value: controller,
-        builder: (_, __) => Selector<VeVodPlayerController, bool>(
-          builder: (_, bool isFullScreen, Widget? child) {
-            return PopScope(
-              onPopInvoked: (bool didPop) {
-                if (didPop) return;
-                if (isFullScreen) {
-                  controller.toggleFullScreen(isFullScreen: false);
-                }
+  /// 主体
+  Widget _buildBody({required Widget Function(bool) build}) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final Size size = constraints.constrain(config.size);
+
+        /// 屏幕尺寸
+        final Size screenSize = MediaQuery.sizeOf(context);
+
+        if (size == screenSize) {
+          controller._isFull = true;
+
+          return ChangeNotifierProvider<VeVodPlayerController>.value(
+            value: controller,
+            builder: (_, __) => Selector<VeVodPlayerController, bool>(
+              builder: (_, bool isFullScreen, __) {
+                return PopScope(
+                  onPopInvoked: (bool didPop) {
+                    if (didPop) return;
+                    if (isFullScreen) {
+                      controller.toggleFullScreen(isFullScreen: false);
+                    }
+                  },
+                  canPop: !isFullScreen,
+                  child: build.call(!isFullScreen),
+                );
               },
-              canPop: !isFullScreen,
-              child: child ?? const SizedBox.shrink(),
-            );
-          },
-          selector: (_, __) => __.value.isFullScreen,
-          child: child,
-        ),
-      );
-    }
+              selector: (_, __) => __.value.isFullScreen,
+            ),
+          );
+        }
 
-    return child;
+        return build.call(true);
+      },
+    );
   }
 
   VeVodPlayerConfig get config => controller.config;
@@ -224,7 +235,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
       StreamController<bool>.broadcast();
 
   /// 是否占满屏幕
-  bool _isFullScreen = false;
+  bool _isFull = false;
 
   bool _isDisposed = false;
 
@@ -324,6 +335,8 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   }) async {
     if (moment == null) return;
 
+    _closePlaybackSpeed();
+
     /// 开始缓冲
     value = value.copyWith(isBuffering: true);
 
@@ -404,8 +417,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
     if (hasTimer) {
       _playbackSpeedTimer = Timer.periodic(Durations.extralong4 * 2, (_) async {
-        value = value.copyWith(isPlaybackSpeed: false);
-        _cancelPlaybackSpeedTimer();
+        _closePlaybackSpeed();
       });
     } else {
       /// 记录默认播放速度
@@ -422,6 +434,12 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
       isPlaybackSpeed: hasTimer,
       isMaxPlaybackSpeed: !hasTimer && speed == maxPlaybackSpeed,
     );
+  }
+
+  /// 关闭播放速度展示
+  void _closePlaybackSpeed() {
+    value = value.copyWith(isPlaybackSpeed: false);
+    _cancelPlaybackSpeedTimer();
   }
 
   /// 设置最大播放速度
@@ -467,6 +485,8 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     DragVerticalType? type,
     double? currentValue,
   }) {
+    if (value.isPlaybackSpeed) _closePlaybackSpeed();
+
     value = value.copyWith(
       isDragVertical: isDragVertical,
       clearDragVerticalType: !isDragVertical,
@@ -482,6 +502,8 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
   /// 设置是否正在调整播放进度
   void _setDragProgress(bool isDragProgress) {
+    if (value.isPlaybackSpeed) _closePlaybackSpeed();
+
     value = value.copyWith(
       isDragProgress: isDragProgress,
       dragDuration: isDragProgress
@@ -503,11 +525,12 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   }
 
   /// 切换 全屏模式
-  void toggleFullScreen({bool? isFullScreen}) {
-    if (!value.isInitialized) return;
+  bool toggleFullScreen({bool? isFullScreen}) {
+    if (!value.isInitialized) return false;
 
     value = value.copyWith(isFullScreen: isFullScreen ?? !value.isFullScreen);
     _fullScreenStream.add(value.isFullScreen);
+    return true;
   }
 
   /// 屏幕旋转
@@ -560,6 +583,9 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     final Duration position = await _vodPlayer.position;
     final Duration buffered = await _vodPlayer.playableDuration;
     value = value.copyWith(position: position, buffered: buffered);
+
+    /// 进度监听
+    config.onChanged?.call(value);
   }
 
   /// 获取视频尺寸
@@ -590,7 +616,6 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
     final Duration position = value.position;
     if (position >= maxPreviewTime && !value.isMaxPreviewTime) {
-      toggleFullScreen(isFullScreen: false);
       value = value.copyWith(isMaxPreviewTime: true);
       _reset();
       await pause();
@@ -667,6 +692,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
           if (value.isBuffering) value = value.copyWith(isBuffering: false);
         } else if (state == TTVideoEngineLoadState.stalled) {
           /// 缓冲中
+          _closePlaybackSpeed();
           value = value.copyWith(isBuffering: true);
         } else if (state == TTVideoEngineLoadState.error) {
           /// 加载错误
@@ -1135,22 +1161,16 @@ class _VeVodPlayerSafeAreaState extends State<VeVodPlayerSafeArea> {
 
   @override
   void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
-      if (renderBox == null) return;
-
-      /// 屏幕尺寸
-      final Size screenSize = MediaQuery.sizeOf(context);
-
-      setState(() {
-        size = renderBox.size;
-        topOffset = renderBox.localToGlobal(Offset.zero);
-        bottomOffset = renderBox.localToGlobal(Offset(0, size.height)) -
-            Offset(0, screenSize.height);
-      });
-    });
+    _getData();
 
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    _getData();
+
+    super.didChangeDependencies();
   }
 
   @override
@@ -1171,5 +1191,23 @@ class _VeVodPlayerSafeAreaState extends State<VeVodPlayerSafeArea> {
       maintainBottomViewPadding: widget.maintainBottomViewPadding,
       child: widget.child,
     );
+  }
+
+  /// 获取屏幕相关数据
+  void _getData() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+      if (renderBox == null) return;
+
+      /// 屏幕尺寸
+      final Size screenSize = MediaQuery.sizeOf(context);
+
+      setState(() {
+        size = renderBox.size;
+        topOffset = renderBox.localToGlobal(Offset.zero);
+        bottomOffset = renderBox.localToGlobal(Offset(0, size.height)) -
+            Offset(0, screenSize.height);
+      });
+    });
   }
 }
