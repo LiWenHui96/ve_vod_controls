@@ -44,7 +44,9 @@ ve_vod:
 
 > ⚠️ 特别注意：
 > 
-> WRITE_EXTERNAL_STORAGE 为非必需权限，可根据您的实际需求设置，插件内并未添加。
+> 1. WRITE_EXTERNAL_STORAGE 为非必需权限，可根据您的实际需求设置，插件内并未添加。
+> 
+> 2. 构建出现依赖jcenter的问题时，项目内添加 `maven { url "https://artifact.bytedance.com/repository/Volcengine/" }`
 
 #### iOS
 
