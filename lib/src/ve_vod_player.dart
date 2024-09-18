@@ -263,9 +263,9 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     /// 设置[TTVideoPlayerView.nativeViewType]
     _nativeViewType = NativeViewType.TextureView;
 
-    if (!_isInitialized && !viewId.isNegative) {
+    if (!_isInitialized) {
       _isInitialized = true;
-      unawaited(_init(viewId));
+      if (!viewId.isNegative) unawaited(_init(viewId));
     }
 
     /// 设置播放源
