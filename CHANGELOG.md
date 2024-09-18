@@ -1,6 +1,6 @@
-## 1.0.2
+## 1.0.3
 
-* Fix `Not Found setPlayerContainerView`.
+* Fix Bug.
 
 ## 1.0.1
 
