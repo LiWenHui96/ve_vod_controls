@@ -211,6 +211,9 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   /// 屏幕亮度控制
   final ScreenBrightness _brightness = ScreenBrightness();
 
+  /// 是否初始化成功
+  bool _isInitialized = false;
+
   /// 是否为首次初始化
   bool _isFirstInit = true;
 
@@ -260,6 +263,11 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     /// 设置[TTVideoPlayerView.nativeViewType]
     _nativeViewType = NativeViewType.TextureView;
 
+    if (!_isInitialized && !viewId.isNegative) {
+      _isInitialized = true;
+      unawaited(_init(viewId));
+    }
+
     /// 设置播放源
     await _vodPlayer.setMediaSource(source);
 
@@ -288,6 +296,11 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
   /// 执行初始化[TTVideoPlayerView]操作
   Future<void> _init(int viewId) async {
+    if (!_isInitialized) {
+      this.viewId = viewId;
+      return;
+    }
+
     /// 存储viewId
     if (!value.isFullScreen) this.viewId = viewId;
 
