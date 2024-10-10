@@ -35,6 +35,7 @@ class VeVodPlayerConfig {
     this.autoPlay = false,
     this.startAt,
     this.maxPreviewTime,
+    this.resetOnMaxPreviewEnd = true,
     this.looping = false,
     this.overlayBuilder,
     this.placeholderBuilder,
@@ -101,6 +102,9 @@ class VeVodPlayerConfig {
   ///
   /// 如果设置的持续时间超过视频的最大持续时间，则视为可以观看整个视频。
   final Duration? maxPreviewTime;
+
+  /// 达到试看时长后，是否恢复初始状态
+  final bool resetOnMaxPreviewEnd;
 
   /// 是否循环播放
   ///

@@ -629,6 +629,8 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
     final Duration position = value.position;
     if (position >= maxPreviewTime && !value.isMaxPreviewTime) {
+      if (config.resetOnMaxPreviewEnd) toggleFullScreen(isFullScreen: false);
+
       value = value.copyWith(isMaxPreviewTime: true);
       _reset();
       await pause();
