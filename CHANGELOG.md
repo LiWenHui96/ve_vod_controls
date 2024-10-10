@@ -1,3 +1,7 @@
+## 1.0.4
+
+* Add `resetOnMaxPreviewEnd`.
+
 ## 1.0.3
 
 * Fix Bug.
