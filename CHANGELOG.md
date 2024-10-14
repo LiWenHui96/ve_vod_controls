@@ -1,3 +1,7 @@
+## 1.0.5
+
+* Add `orientationsExitFullScreen`.
+
 ## 1.0.4+1
 
 * Fix Bug.
