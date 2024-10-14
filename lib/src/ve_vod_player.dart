@@ -550,9 +550,19 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   Future<void> _toggleOrientations() async {
     await SystemChrome.setPreferredOrientations(<DeviceOrientation>[]);
     if (value.isFullScreen) {
+      await SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.manual,
+        overlays: <SystemUiOverlay>[],
+      );
+
       /// 进入全屏模式
       await SystemChrome.setPreferredOrientations(orientations);
     } else {
+      await SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.manual,
+        overlays: config.systemOverlaysExitFullScreen,
+      );
+
       /// 退出全屏模式
       await SystemChrome.setPreferredOrientations(
         config.orientationsExitFullScreen,
