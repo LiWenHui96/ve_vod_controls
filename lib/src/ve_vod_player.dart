@@ -529,12 +529,25 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
   /// 设置调整的播放进度
   void _setDragDuration(Duration duration) {
-    if (duration < Duration.zero) {
+    final Duration? maxPreviewTime = config.maxPreviewTime;
+
+    if (maxPreviewTime != null && duration > maxPreviewTime) {
+      duration = maxPreviewTime;
+    } else if (duration < Duration.zero) {
       duration = Duration.zero;
     } else if (duration > value.duration) {
       duration = value.duration;
     }
     value = value.copyWith(dragDuration: duration);
+  }
+
+  /// 设置点击的播放进度
+  void _setTapDuration(Duration duration) {
+    final Duration? maxPreviewTime = config.maxPreviewTime;
+    if (maxPreviewTime != null && duration > maxPreviewTime) {
+      duration = maxPreviewTime;
+    }
+    seekTo(duration);
   }
 
   /// 切换 全屏模式

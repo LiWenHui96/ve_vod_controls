@@ -394,7 +394,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
   /// 点击进度条更改视频播放进度
   void onTapUp(double relative) {
     if (!allowPressed || value.isBuffering || value.isCompleted) return;
-    controller.seekTo(value.duration * relative);
+    controller._setTapDuration(value.duration * relative);
   }
 
   /// 操作是否可以执行
