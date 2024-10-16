@@ -1,6 +1,6 @@
 name: ve_vod_controls
 description: "基于ve_vod封装的视频播放器，携带控制器"
-version: 1.0.6
+version: 1.0.7
 homepage: https://github.com/LiWenHui96
 repository: https://github.com/LiWenHui96/ve_vod_controls
 issue_tracker: https://github.com/LiWenHui96/ve_vod_controls/issues
