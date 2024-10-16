@@ -177,7 +177,10 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
 
     if (value.isCompleted) {
       child = GestureDetector(
-        onTap: togglePlayPause,
+        onTap: () {
+          controller._setIsCompleted(false);
+          togglePlayPause();
+        },
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(

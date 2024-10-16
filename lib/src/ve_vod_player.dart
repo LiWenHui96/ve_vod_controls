@@ -612,6 +612,10 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   Future<void> _getDuration() async {
     final Duration duration = await _vodPlayer.duration;
     value = value.copyWith(duration: duration);
+
+    /// 获取时长后，如果设置的起始位置超过视频时长，则恢复到初始位置
+    final Duration? startAt = config.startAt;
+    if (startAt != null && startAt > duration) await seekTo(Duration.zero);
   }
 
   /// 获取播放进度/已缓冲的播放进度
@@ -674,6 +678,11 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
       isDragProgress: false,
       dragDuration: Duration.zero,
     );
+  }
+
+  /// 设置播放完成的状态
+  void _setIsCompleted(bool isCompleted) {
+    value = value.copyWith(isCompleted: isCompleted);
   }
 
   /// 播放状态回调
@@ -750,7 +759,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
         if (error != null) {
           value = value.copyWith(error: error);
         } else {
-          if (!value.isLooping) value = value.copyWith(isCompleted: true);
+          if (!value.isLooping) _setIsCompleted(true);
         }
 
         /// 重置
