@@ -673,8 +673,12 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   /// 播放完成 or 播放失败 后，重置
   void _reset() {
     value = value.copyWith(
+      isPlaying: false,
+      isBuffering: false,
       isLock: false,
+      isPlaybackSpeed: false,
       isMaxPlaybackSpeed: false,
+      isDragVertical: false,
       isDragProgress: false,
       dragDuration: Duration.zero,
     );
