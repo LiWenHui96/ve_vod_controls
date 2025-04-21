@@ -86,19 +86,15 @@ class _ControlsMaxPlaybackState extends State<ControlsMaxPlayback>
       case 0:
         _icon1 = 2;
         _icon2 = 1;
-        break;
       case 1:
         _icon1 = 1;
         _icon2 = 2;
-        break;
       case 2:
         _icon1 = 0;
         _icon2 = 1;
-        break;
       case 3:
         _icon1 = 1;
         _icon2 = 0;
-        break;
     }
     setState(() {});
   }

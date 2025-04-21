@@ -41,7 +41,7 @@ class ControlsSpeed extends StatelessWidget {
         );
       },
       style: ButtonStyle(
-        overlayColor: MaterialStateProperty.all(Colors.transparent),
+        overlayColor: WidgetStateProperty.all(Colors.transparent),
       ),
       child: Text(label, style: config.defaultTextStyle),
     );
