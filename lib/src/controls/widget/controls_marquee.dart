@@ -3,7 +3,7 @@
 /// @Author: LiWeNHuI
 /// @Date: 2024/7/18
 
-part of ve_vod_controls;
+part of ve_vod_player;
 
 class ControlsMarquee extends StatefulWidget {
   ControlsMarquee({super.key, required this.child})
@@ -36,7 +36,7 @@ class _ControlsMarqueeState extends State<ControlsMarquee> {
           child = Marquee(
             text: text.data ?? '',
             style: style,
-            blankSpace: max(0, constraints.maxWidth / 2),
+            blankSpace: math.max(0, constraints.maxWidth / 2),
             velocity: 20,
             startAfter: stayDuration,
             pauseAfterRound: stayDuration,

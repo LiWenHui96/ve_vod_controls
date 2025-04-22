@@ -1,8 +1,4 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
-import 'package:ve_vod_controls/ve_vod_controls.dart';
-
-import 've_vod_controls_platform_interface.dart';
+part of ve_vod_controls;
 
 /// An implementation of [VeVodControlsPlatform] that uses method channels.
 class MethodChannelVeVodControls extends VeVodControlsPlatform {
@@ -81,6 +77,16 @@ class MethodChannelVeVodControls extends VeVodControlsPlatform {
   @override
   Future<String?> getEngineUniqueID() {
     return FlutterTTSDKManager.getEngineUniqueId();
+  }
+
+  @override
+  Future<bool?> isDeviceSupportDrm() {
+    return FlutterTTSDKManager.isDeviceSupportDrm();
+  }
+
+  @override
+  Future<bool?> isSupportH265HardwareDecode() {
+    return FlutterTTSDKManager.isSupportH265HardwareDecode();
   }
 
   @override

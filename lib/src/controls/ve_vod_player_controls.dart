@@ -3,7 +3,7 @@
 /// @Author: LiWeNHuI
 /// @Date: 2024/7/16
 
-part of ve_vod_controls;
+part of ve_vod_player;
 
 class VeVodPlayerControls extends StatefulWidget {
   const VeVodPlayerControls({
@@ -333,7 +333,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
     if (!value.isDragVertical) return;
 
     double data = value.dragVerticalValue - (details.delta.dy / totalHeight);
-    data = clampDouble(data, 0, 1);
+    data = ui.clampDouble(data, 0, 1);
     controller._setDragVerticalValue(data);
 
     /// 实时改变

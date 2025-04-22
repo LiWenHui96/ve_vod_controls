@@ -4,7 +4,46 @@
 /// @Author: LiWeNHuI
 /// @Date: 2024/7/15
 
-part of ve_vod_controls;
+library ve_vod_player;
+
+import 'dart:async';
+import 'dart:math' as math;
+import 'dart:ui' as ui;
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:marquee/marquee.dart';
+import 'package:provider/provider.dart';
+import 'package:screen_brightness/screen_brightness.dart';
+import 'package:ve_vod/ve_vod.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
+
+part 'controls/ve_vod_player_controls.dart';
+
+part 'controls/ve_vod_player_controls_bottom.dart';
+
+part 'controls/ve_vod_player_controls_center.dart';
+
+part 'controls/ve_vod_player_controls_top.dart';
+
+part 'controls/widget/controls_duration.dart';
+
+part 'controls/widget/controls_lock.dart';
+
+part 'controls/widget/controls_marquee.dart';
+
+part 'controls/widget/controls_max_playback.dart';
+
+part 'controls/widget/controls_play_pause.dart';
+
+part 'controls/widget/controls_speed.dart';
+
+part 'controls/widget/controls_vertical.dart';
+
+part 'player/ve_vod_player_body.dart';
+
+part 'player/ve_vod_player_config.dart';
 
 /// {@template ve.vod.controls.VodPlayer}
 /// 视频播放器
@@ -471,7 +510,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
   /// 设置播放音量
   Future<void> setVolume(double volume) async {
-    volume = clampDouble(volume, 0, 1);
+    volume = ui.clampDouble(volume, 0, 1);
     await _vodPlayer.setVolume(volume: TTVolume(left: volume, right: volume));
   }
 
@@ -486,7 +525,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
   /// 设置屏幕亮度
   Future<void> setBrightness(double brightness) async {
-    await _brightness.setScreenBrightness(clampDouble(brightness, 0, 1));
+    await _brightness.setScreenBrightness(ui.clampDouble(brightness, 0, 1));
   }
 
   /// 重置屏幕亮度

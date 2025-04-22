@@ -3,7 +3,7 @@
 /// @Author: LiWeNHuI
 /// @Date: 2024/6/4
 
-part of ve_vod_controls;
+part of ve_vod_player;
 
 class ControlsDuration extends StatelessWidget {
   const ControlsDuration({
@@ -71,8 +71,8 @@ class ControlsDuration extends StatelessWidget {
         textDirection: TextDirection.ltr,
         locale: WidgetsBinding.instance.platformDispatcher.locale,
       )..layout();
-      maxWidth = max(maxWidth, painter.width);
-      maxHeight = max(maxHeight, painter.height);
+      maxWidth = math.max(maxWidth, painter.width);
+      maxHeight = math.max(maxHeight, painter.height);
     }
 
     return Size(maxWidth, maxHeight);
@@ -141,7 +141,7 @@ class _ControlsProgressState extends State<ControlsProgress> {
           child: CustomPaint(
             size: Size(
               constraints.constrainWidth(MediaQuery.sizeOf(context).width),
-              max(widget.height, 4),
+              math.max(widget.height, 4),
             ),
             painter: ControlsProgressPainter(
               value: widget.value,

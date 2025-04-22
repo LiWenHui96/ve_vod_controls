@@ -9,7 +9,7 @@
 
 ### 准备工作
 
-* [环境要求](https://www.volcengine.com/docs/4/1264515#%E7%8E%AF%E5%A2%83%E8%A6%81%E6%B1%82)
+* [环境要求](https://www.volcengine.com/docs/4/1264515)
 * [创建应用](https://www.volcengine.com/docs/4/79594)
 * [License 包管理](https://www.volcengine.com/docs/4/65772)
 
@@ -32,29 +32,26 @@ ve_vod:
 
 #### Android
 
-[环境要求](https://www.volcengine.com/docs/4/65774#%E7%8E%AF%E5%A2%83%E8%A6%81%E6%B1%82)
+[环境要求](https://www.volcengine.com/docs/4/65774)
 
 相关配置内容已在[本插件](#ve_vod_controls)以及 [ve_vod](https://pub.dev/packages/ve_vod) 中完成，无需重复配置。
 包括：
 1. 添加 maven 仓库
 2. 添加 SDK 依赖
 3. Java 8 支持
-4. [权限声明](https://www.volcengine.com/docs/4/65774#%E6%9D%83%E9%99%90%E5%A3%B0%E6%98%8E)
-5. [混淆规则](https://www.volcengine.com/docs/4/65774#%E6%B7%B7%E6%B7%86%E8%A7%84%E5%88%99)
+4. [权限声明](https://www.volcengine.com/docs/4/65774#%E6%AD%A5%E9%AA%A4-4%EF%BC%9A%E5%A3%B0%E6%98%8E%E6%9D%83%E9%99%90)
+5. [混淆规则](https://www.volcengine.com/docs/4/65774#%E6%AD%A5%E9%AA%A4-5%EF%BC%9A%E9%85%8D%E7%BD%AE%E6%B7%B7%E6%B7%86%E8%A7%84%E5%88%99)
 
 > ⚠️ 特别注意：
 > 
-> 1. WRITE_EXTERNAL_STORAGE 为非必需权限，可根据您的实际需求设置，插件内并未添加。
-> 
-> 2. 构建出现依赖jcenter的问题时，项目内添加 `maven { url "https://artifact.bytedance.com/repository/Volcengine/" }`
+> WRITE_EXTERNAL_STORAGE 为非必需权限，可根据您的实际需求设置，插件内并未添加。
 
 #### iOS
 
-[环境要求](https://www.volcengine.com/docs/4/65775#%E7%8E%AF%E5%A2%83%E8%A6%81%E6%B1%82)
+[环境要求](https://www.volcengine.com/docs/4/65775)
 
 [ve_vod](https://pub.dev/packages/ve_vod) 中完成了SDK的集成，需要开发者自行添加相关配置：
-1. [关闭 Bitcode](https://www.volcengine.com/docs/4/65775#%E5%85%B3%E9%97%AD%20Bitcode)
-2. 配置 `Pod Source`。请在您的 Xcode 工程的 Podfile 文件中添加以下 Source：
+1. 配置 `Pod Source`。请在您的 Xcode 工程的 Podfile 文件中添加以下 Source：
 ```ruby
 # 资源地址
 source 'https://github.com/CocoaPods/Specs.git'

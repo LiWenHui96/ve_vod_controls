@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ve_vod_controls/ve_vod_controls_method_channel.dart';
+import 'package:ve_vod_controls/src/ve_vod_controls.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

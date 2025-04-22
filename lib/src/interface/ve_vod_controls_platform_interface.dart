@@ -1,8 +1,4 @@
-import 'package:flutter/foundation.dart';
-import 'package:plugin_platform_interface/plugin_platform_interface.dart';
-
-import 've_vod_controls.dart';
-import 've_vod_controls_method_channel.dart';
+part of ve_vod_controls;
 
 abstract class VeVodControlsPlatform extends PlatformInterface {
   /// Constructs a VeVodControlsPlatform.
@@ -105,5 +101,21 @@ abstract class VeVodControlsPlatform extends PlatformInterface {
   /// {@endtemplate}
   Future<String?> getEngineUniqueID() {
     throw UnimplementedError('getEngineUniqueID() has not been implemented.');
+  }
+
+  /// {@template ve.vod.controls.isDeviceSupportDrm}
+  /// 获取当前设备是否支持Drm
+  /// {@endtemplate}
+  Future<bool?> isDeviceSupportDrm() {
+    throw UnimplementedError('isDeviceSupportDrm() has not been implemented.');
+  }
+
+  /// {@template ve.vod.controls.isSupportH265HardwareDecode}
+  /// 获取当前设备是支持H.265硬件解码
+  /// {@endtemplate}
+  Future<bool?> isSupportH265HardwareDecode() {
+    throw UnimplementedError(
+      'isSupportH265HardwareDecode() has not been implemented.',
+    );
   }
 }
