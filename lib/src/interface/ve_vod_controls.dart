@@ -3,16 +3,16 @@
 /// @Author: LiWeNHuI
 /// @Date: 2024/7/15
 
-library ve_vod_controls;
+library;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:ve_vod/ve_vod.dart';
 
-part 'interface/ve_vod_controls_method_channel.dart';
+part 've_vod_controls_method_channel.dart';
 
-part 'interface/ve_vod_controls_platform_interface.dart';
+part 've_vod_controls_platform_interface.dart';
 
 class VeVodControls {
   static final VeVodControls _instance = VeVodControls();

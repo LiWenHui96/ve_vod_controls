@@ -1,4 +1,4 @@
-part of ve_vod_controls;
+part of 've_vod_controls.dart';
 
 abstract class VeVodControlsPlatform extends PlatformInterface {
   /// Constructs a VeVodControlsPlatform.

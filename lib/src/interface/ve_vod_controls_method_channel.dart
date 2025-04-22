@@ -1,4 +1,4 @@
-part of ve_vod_controls;
+part of 've_vod_controls.dart';
 
 /// An implementation of [VeVodControlsPlatform] that uses method channels.
 class MethodChannelVeVodControls extends VeVodControlsPlatform {
