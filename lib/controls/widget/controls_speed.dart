@@ -3,7 +3,7 @@
 /// @Author: LiWeNHuI
 /// @Date: 2024/9/3
 
-part of '../../ve_vod_player.dart';
+part of '../ve_vod_player_controls.dart';
 
 class ControlsSpeed extends StatelessWidget {
   const ControlsSpeed({

@@ -120,7 +120,10 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
           child,
           if (!value.isCompleted && !value.isDragProgress && value.isFullScreen)
             VeVodPlayerControlsCenter(
-              onVisible: () => toggleVisible(visible: true),
+              onLock: () {
+                toggleVisible(visible: true);
+                controller._toggleLock();
+              },
             ),
         ],
       ),

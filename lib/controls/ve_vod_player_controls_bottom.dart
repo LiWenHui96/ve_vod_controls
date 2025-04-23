@@ -3,7 +3,7 @@
 /// @Author: LiWeNHuI
 /// @Date: 2024/7/16
 
-part of '../ve_vod_player.dart';
+part of 've_vod_player_controls.dart';
 
 class VeVodPlayerControlsBottom extends StatelessWidget {
   const VeVodPlayerControlsBottom({

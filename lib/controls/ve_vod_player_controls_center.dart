@@ -3,13 +3,13 @@
 /// @Author: LiWeNHuI
 /// @Date: 2024/7/22
 
-part of '../ve_vod_player.dart';
+part of 've_vod_player_controls.dart';
 
 class VeVodPlayerControlsCenter extends StatelessWidget {
-  const VeVodPlayerControlsCenter({super.key, this.onVisible});
+  const VeVodPlayerControlsCenter({super.key, this.onLock});
 
-  /// 用于显示控制器
-  final VoidCallback? onVisible;
+  /// 锁定点击事件
+  final VoidCallback? onLock;
 
   @override
   Widget build(BuildContext context) {
@@ -22,10 +22,7 @@ class VeVodPlayerControlsCenter extends StatelessWidget {
         isLock: value.isLock,
         allowLock: config.allowLock,
         color: config.foregroundColor,
-        onLock: () {
-          onVisible?.call();
-          controller._toggleLock();
-        },
+        onLock: onLock,
       );
     }
 
