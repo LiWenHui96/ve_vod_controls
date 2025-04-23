@@ -3,7 +3,7 @@
 /// @Author: LiWeNHuI
 /// @Date: 2024/7/16
 
-part of ve_vod_player;
+part of '../ve_vod_player.dart';
 
 class VeVodPlayerControlsTop extends StatelessWidget {
   const VeVodPlayerControlsTop({super.key});

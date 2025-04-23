@@ -1,7 +1,7 @@
 export 'package:ve_vod/ve_vod.dart';
 
 export 'interface/ve_vod_controls.dart' show VeVodControls;
-export 'src/ve_vod_player.dart'
+export 'player/ve_vod_player.dart'
     show
         ControlsProgressColors,
         VeVodPlayer,

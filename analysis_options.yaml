@@ -21,11 +21,9 @@ analyzer:
     strict-casts: true
     strict-inference: true
   errors:
-    deprecated_member_use_from_same_package: info
-    invalid_annotation_target: ignore
+    deprecated_member_use_from_same_package: warning
     missing_required_param: error
     missing_return: error
-    unnecessary_import: warning
 
 # This file configures the analyzer, which statically analyzes Dart code to
 # check for errors, warnings, and lints.

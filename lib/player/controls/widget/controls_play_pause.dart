@@ -3,7 +3,7 @@
 /// @Author: LiWeNHuI
 /// @Date: 2024/6/3
 
-part of ve_vod_player;
+part of '../../ve_vod_player.dart';
 
 class ControlsPlayPause extends StatefulWidget {
   const ControlsPlayPause({

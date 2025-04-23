@@ -3,7 +3,7 @@
 /// @Author: LiWeNHuI
 /// @Date: 2024/7/18
 
-part of ve_vod_player;
+part of '../../ve_vod_player.dart';
 
 class ControlsMarquee extends StatefulWidget {
   ControlsMarquee({super.key, required this.child})

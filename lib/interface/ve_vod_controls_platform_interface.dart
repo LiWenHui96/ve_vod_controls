@@ -22,7 +22,7 @@ abstract class VeVodControlsPlatform extends PlatformInterface {
   }
 
   Future<String?> getPlatformVersion() {
-    throw UnimplementedError('platformVersion() has not been implemented.');
+    throw UnimplementedError(_message('platformVersion'));
   }
 
   /// {@template ve.vod.controls.init}
@@ -42,7 +42,7 @@ abstract class VeVodControlsPlatform extends PlatformInterface {
   ///
   /// [appChannel] 渠道号，业务自定义，默认为[kAppChannel]
   ///
-  /// [cacheDirPath] 视频缓存路径，默认为[kCacheDir]
+  /// [cacheDirPath] 视频缓存路径
   ///
   /// [maxCacheSize] 视频缓存文件夹大小，默认值为[kMaxCacheSize]
   ///
@@ -59,7 +59,7 @@ abstract class VeVodControlsPlatform extends PlatformInterface {
     int? maxCacheSize,
     bool isDebug = false,
   }) {
-    throw UnimplementedError('init() has not been implemented.');
+    throw UnimplementedError(_message('init'));
   }
 
   /// {@template ve.vod.controls.setUserUniqueID}
@@ -72,50 +72,50 @@ abstract class VeVodControlsPlatform extends PlatformInterface {
   /// iOS: https://www.volcengine.com/docs/4/171486
   /// {@endtemplate}
   Future<void> setUserUniqueID(String userId) {
-    throw UnimplementedError('setUserUniqueID() has not been implemented.');
+    throw UnimplementedError(_message('setUserUniqueID'));
   }
 
   /// {@template ve.vod.controls.getUserUniqueID}
   /// 获取当前的自定义UniqueID
   /// {@endtemplate}
   Future<String?> getUserUniqueID() {
-    throw UnimplementedError('getUserUniqueID() has not been implemented.');
+    throw UnimplementedError(_message('getUserUniqueID'));
   }
 
   /// {@template ve.vod.controls.clearUserUniqueID}
   /// 清除自定义UniqueID
   /// {@endtemplate}
   Future<void> clearUserUniqueID() {
-    throw UnimplementedError('clearUserUniqueID() has not been implemented.');
+    throw UnimplementedError(_message('clearUserUniqueID'));
   }
 
   /// {@template ve.vod.controls.getDeviceID}
   /// 获取设备ID
   /// {@endtemplate}
   Future<String?> getDeviceID() {
-    throw UnimplementedError('getDeviceID() has not been implemented.');
+    throw UnimplementedError(_message('getDeviceID'));
   }
 
   /// {@template ve.vod.controls.getEngineUniqueID}
   /// 获取当前设备 DRM 唯一标识
   /// {@endtemplate}
   Future<String?> getEngineUniqueID() {
-    throw UnimplementedError('getEngineUniqueID() has not been implemented.');
+    throw UnimplementedError(_message('getEngineUniqueID'));
   }
 
   /// {@template ve.vod.controls.isDeviceSupportDrm}
   /// 获取当前设备是否支持Drm
   /// {@endtemplate}
   Future<bool?> isDeviceSupportDrm() {
-    throw UnimplementedError('isDeviceSupportDrm() has not been implemented.');
+    throw UnimplementedError(_message('isDeviceSupportDrm'));
   }
 
   /// {@template ve.vod.controls.isSupportH265HardwareDecode}
   /// 获取当前设备是支持H.265硬件解码
   /// {@endtemplate}
   Future<bool?> isSupportH265HardwareDecode() {
-    throw UnimplementedError(
-      'isSupportH265HardwareDecode() has not been implemented.',
-    );
+    throw UnimplementedError(_message('isSupportH265HardwareDecode'));
   }
+
+  String _message(String method) => '$method() has not been implemented.';
 }

@@ -3,7 +3,7 @@
 /// @Author: LiWeNHuI
 /// @Date: 2024/7/15
 
-part of ve_vod_player;
+part of 've_vod_player.dart';
 
 /// 依据[value]显示不同的小部件
 typedef VeVodPlayerBuilder<T> = T Function(
