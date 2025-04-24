@@ -21,7 +21,6 @@ class VeVodPlayerControlsCenter extends StatelessWidget {
       return ControlsLock(
         isLock: value.isLock,
         allowLock: config.allowLock,
-        color: config.foregroundColor,
         onLock: onLock,
       );
     }
@@ -47,12 +46,24 @@ class VeVodPlayerControlsCenter extends StatelessWidget {
       return Column(mainAxisSize: MainAxisSize.min, children: children);
     }
 
-    final Widget child = Row(
+    Widget child = Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: <Widget>[
-        actions(config.centerLeftActionsBuilder),
-        actions(config.centerRightActionsBuilder),
+        actions(config.onCenterLeftActionsBuilder),
+        actions(config.onCenterRightActionsBuilder),
       ],
+    );
+
+    child = IconButtonTheme(
+      data: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: config.foregroundColor,
+          iconSize: config.iconSize,
+          padding: EdgeInsets.zero,
+          visualDensity: VisualDensity.compact,
+        ),
+      ),
+      child: child,
     );
 
     return Padding(

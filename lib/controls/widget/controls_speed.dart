@@ -29,10 +29,10 @@ class ControlsSpeed extends StatelessWidget {
 
     final String label = speed == 1.0 ? '倍速' : 'x$speed';
 
-    return TextButton(
-      onPressed: () {
+    return GestureDetector(
+      onTap: () {
         onVisible?.call();
-        _showDialog(
+        _showSpeedsDialog(
           context,
           speeds: controller.playbackSpeeds,
           playbackSpeed: speed,
@@ -40,83 +40,104 @@ class ControlsSpeed extends StatelessWidget {
           onChanged: onChanged,
         );
       },
-      style: ButtonStyle(
-        overlayColor: WidgetStateProperty.all(Colors.transparent),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+        child: Text(label, style: config.defaultTextStyle),
       ),
-      child: Text(label, style: config.defaultTextStyle),
     );
   }
+}
 
-  /// 设置播放速度
-  Future<void> _showDialog(
-    BuildContext context, {
-    required List<double> speeds,
-    required double playbackSpeed,
-    required VeVodPlayerControlsConfig config,
-    ValueChanged<double>? onChanged,
-  }) async {
-    final double height = MediaQuery.sizeOf(context).height;
+/// 展示倍速选择框
+Future<void> _showSpeedsDialog(
+  BuildContext context, {
+  required List<double> speeds,
+  required double playbackSpeed,
+  required VeVodPlayerControlsConfig config,
+  ValueChanged<double>? onChanged,
+}) {
+  return showDialog(
+    context: context,
+    barrierColor: Colors.transparent,
+    useSafeArea: false,
+    builder: (BuildContext ctx) {
+      return Dialog(
+        backgroundColor: config.toolTipBackgroundColor,
+        insetPadding: EdgeInsets.zero,
+        shape: const RoundedRectangleBorder(),
+        alignment: Alignment.centerRight,
+        child: SizedBox.fromSize(
+          size: Size(0, MediaQuery.sizeOf(context).height),
+          child: SpeedsDialog(
+            speeds: speeds,
+            playbackSpeed: playbackSpeed,
+            config: config,
+            onChanged: (double speed) {
+              Navigator.pop(ctx);
+              onChanged?.call(speed);
+            },
+          ),
+        ),
+      );
+    },
+  );
+}
 
-    const double itemHeight = 45;
-    final bool isMax = height >= itemHeight * speeds.length;
+/// 弹窗视图
+class SpeedsDialog extends StatelessWidget {
+  const SpeedsDialog({
+    super.key,
+    required this.speeds,
+    required this.playbackSpeed,
+    required this.config,
+    this.onChanged,
+  });
 
-    await showDialog<void>(
-      context: context,
-      barrierColor: Colors.transparent,
-      useSafeArea: false,
-      builder: (BuildContext ctx) {
-        Widget child = Column(
-          mainAxisAlignment:
-              isMax ? MainAxisAlignment.spaceEvenly : MainAxisAlignment.start,
-          children: speeds.map((double speed) {
-            final bool isSelected = speed == playbackSpeed;
+  /// 倍速列表
+  final List<double> speeds;
 
-            Widget child = Text(
-              'x$speed',
-              style: config.defaultTextStyle.copyWith(
-                color: isSelected ? Theme.of(context).primaryColor : null,
-              ),
-            );
+  /// 当前倍速
+  final double playbackSpeed;
 
-            child = Container(
-              alignment: Alignment.center,
-              constraints: const BoxConstraints(minHeight: itemHeight),
-              child: child,
-            );
+  /// 控制器配置
+  final VeVodPlayerControlsConfig config;
 
-            return GestureDetector(
-              onTap: () {
-                Navigator.pop(ctx);
-                onChanged?.call(speed);
-              },
-              behavior: HitTestBehavior.opaque,
-              child: child,
-            );
-          }).toList(),
+  /// 倍速变化回调
+  final ValueChanged<double>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget child = Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: speeds.map((double speed) {
+        final bool isSelected = speed == playbackSpeed;
+
+        Widget child = Text(
+          'x$speed',
+          style: config.defaultTextStyle.copyWith(
+            color: isSelected ? Theme.of(context).primaryColor : null,
+          ),
         );
 
-        if (isMax) {
-          child = Padding(
-            padding: EdgeInsets.symmetric(vertical: height * .1),
-            child: child,
-          );
-        } else {
-          child = SingleChildScrollView(
-            padding: EdgeInsets.symmetric(vertical: height * .1),
-            child: child,
-          );
-        }
-
-        child = SafeArea(left: false, top: false, bottom: false, child: child);
-
-        return Dialog(
-          backgroundColor: config.toolTipBackgroundColor,
-          insetPadding: EdgeInsets.zero,
-          shape: const RoundedRectangleBorder(),
-          alignment: Alignment.centerRight,
-          child: SizedBox.fromSize(size: Size(0, height), child: child),
+        child = Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: child,
         );
-      },
+
+        return GestureDetector(
+          onTap: () => onChanged?.call(speed),
+          behavior: HitTestBehavior.opaque,
+          child: child,
+        );
+      }).toList(),
     );
+
+    final double height = MediaQuery.sizeOf(context).height * .1;
+    child = SingleChildScrollView(
+      padding: EdgeInsets.symmetric(vertical: height),
+      child: child,
+    );
+
+    return Center(child: child);
   }
 }

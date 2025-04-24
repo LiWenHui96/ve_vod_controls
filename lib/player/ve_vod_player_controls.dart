@@ -78,22 +78,24 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: <Widget>[
         Visibility(
-          visible: value.allowControlsTop,
+          visible: value._allowControlsTop,
           child: const VeVodPlayerControlsTop(),
         ),
         Visibility(
-          visible: value.allowControlsBottom,
+          visible: value._allowControlsBottom,
           child: VeVodPlayerControlsBottom(
-            onImmVisible: () =>
-                _controlsController.toggleImmVisible(visible: false),
+            onImmVisible: () {
+              _controlsController.toggleImmVisible(visible: false);
+            },
             onVisible: () => toggleVisible(visible: false),
             onPlayOrPause: togglePlayPause,
             onDragStart: onHorizontalDragStart,
             onDragUpdate: onDragUpdate,
             onDragEnd: onHorizontalDragEnd,
             onTapUp: onTapUp,
-            onSpeed: (_) =>
-                controller.setPlaybackSpeed(speed: _, hasTimer: true),
+            onSpeed: (double speed) {
+              controller.setPlaybackSpeed(speed: speed, hasTimer: true);
+            },
             onFullScreen: () {
               final bool flag = controller.toggleFullScreen();
               if (!flag) _controlsController.toggleImmVisible(visible: true);
@@ -108,17 +110,19 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
     child = Selector<VeVodPlayerControlsController, bool>(
       builder: (_, bool isVisible, Widget? child) {
         return AnimatedOpacity(
-          opacity: value.allowControls || isVisible ? 1 : 0,
+          opacity: value._allowControls || isVisible ? 1 : 0,
           duration: kAnimationDuration,
           child: AbsorbPointer(absorbing: !isVisible, child: child),
         );
       },
-      selector: (_, __) => __._isVisible,
+      selector: (_, VeVodPlayerControlsController controller) {
+        return controller._isVisible;
+      },
       child: Stack(
         alignment: Alignment.center,
         children: <Widget>[
           child,
-          if (!value.isCompleted && !value.isDragProgress && value.isFullScreen)
+          if (value._allowControlsCenter)
             VeVodPlayerControlsCenter(
               onLock: () {
                 toggleVisible(visible: true);
@@ -133,12 +137,12 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
     /// + 即刻显示/隐藏
     child = Selector<VeVodPlayerControlsController, bool>(
       builder: (_, bool isVisible, Widget? child) {
-        return Visibility(
-          visible: isVisible,
-          child: child ?? const SizedBox.shrink(),
-        );
+        child ??= const SizedBox.shrink();
+        return Visibility(visible: isVisible, child: child);
       },
-      selector: (_, __) => __._immVisible,
+      selector: (_, VeVodPlayerControlsController controller) {
+        return controller._immVisible;
+      },
       child: child,
     );
 
@@ -173,8 +177,8 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
   Widget get _buildOperation {
     Widget? child;
 
-    if (value.isMaxPreviewTime) {
-      child = config.maxPreviewTimeBuilder?.call(context, controller, value);
+    if (value.isExceedsPreviewTime) {
+      child = config.onMaxPreviewTimeBuilder?.call(context, controller, value);
       child ??= Text('试看结束', style: config.defaultTextStyle);
     }
 
@@ -195,12 +199,25 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
       );
     }
 
+    if (value._hasPlayButton) {
+      child = Icon(
+        Icons.play_arrow_rounded,
+        size: 60,
+        color: config.foregroundColor,
+      );
+
+      child = GestureDetector(
+        onTap: togglePlayPause,
+        child: config.onPauseBuilder ?? child,
+      );
+    }
+
     return VeVodPlayerSafeArea(child: Center(child: child));
   }
 
   /// 提示组件
   Widget get _buildTooltip {
-    if (value.isMaxPreviewTime) return Container(color: Colors.black);
+    if (value.isExceedsPreviewTime) return Container(color: Colors.black);
     if (value.isCompleted) {
       return Container(color: config.toolTipBackgroundColor);
     }
@@ -246,7 +263,6 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
       child = ControlsVertical(
         value: value.dragVerticalValue,
         type: value.dragVerticalType,
-        color: config.foregroundColor,
       );
     }
 
@@ -265,13 +281,13 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
   void toggleVisible({bool? visible, bool? needTimer}) {
     needTimer ??= value.isPlaying;
     _controlsController
-      .._cancelTimer()
+      ..cancelTimer()
       ..toggleVisible(visible: visible, needTimer: needTimer);
   }
 
   /// 播放/暂停 视频
   Future<void> togglePlayPause() async {
-    if (!allowPressed) return;
+    if (!value._allowPressed) return;
 
     if (value.isPlaying) {
       await controller.pause();
@@ -290,10 +306,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
 
   /// 长按开始，触发最大播放速率播放
   void onLongPressStart(LongPressStartDetails details) {
-    if (!allowPressed ||
-        !config.allowLongPress ||
-        !value.isPlaying ||
-        value.isMaxPlaybackSpeed) {
+    if (!config.allowLongPress || !value._allowLongPress) {
       toggleVisible(visible: true);
       return;
     }
@@ -311,10 +324,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
 
   /// 纵向滑动开始，触发音量/亮度调节
   Future<void> onVerticalDragStart(DragStartDetails details) async {
-    if (!allowPressed ||
-        !config.allowVolumeOrBrightness ||
-        value.isCompleted ||
-        value.isDragVertical) {
+    if (!config.allowVolumeOrBrightness || !value._allowPanDrag) {
       toggleVisible(visible: true);
       return;
     }
@@ -355,10 +365,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
 
   /// 横向滑动开始，触发播放进度调节
   void onHorizontalDragStart(DragStartDetails details) {
-    if (!allowPressed ||
-        !config.allowProgress ||
-        value.isCompleted ||
-        value.isDragProgress) {
+    if (!config.allowProgress || !value._allowPanDrag) {
       toggleVisible(visible: true);
       return;
     }
@@ -374,7 +381,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
 
     final double relative = details.delta.dx / totalWidth;
     controller._setDragDuration(
-      value.dragDuration + value.dragTotalDuration * relative,
+      value.dragDuration + value._dragTotalDuration * relative,
     );
   }
 
@@ -399,13 +406,9 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
 
   /// 点击进度条更改视频播放进度
   void onTapUp(double relative) {
-    if (!allowPressed || value.isBuffering || value.isCompleted) return;
+    if (!value._allowTapProgress) return;
     controller._setTapDuration(value.duration * relative);
   }
-
-  /// 操作是否可以执行
-  bool get allowPressed =>
-      !value.isLock && value.isInitialized && !value.isMaxPreviewTime;
 
   /// 配置
   VeVodPlayerControlsConfig get config => _controlsController.config;
@@ -455,15 +458,15 @@ class VeVodPlayerControlsController extends ChangeNotifier {
     notifyListeners();
 
     if (_isVisible && needTimer) {
-      _startTimer();
+      startTimer();
     } else if (!_isVisible) {
-      _cancelTimer();
+      cancelTimer();
     }
   }
 
   /// 开启计时
-  void _startTimer() {
-    _cancelTimer();
+  void startTimer() {
+    cancelTimer();
 
     _timer = Timer.periodic(config.hideDuration, (Timer timer) {
       if (!timer.isActive) return;
@@ -472,12 +475,12 @@ class VeVodPlayerControlsController extends ChangeNotifier {
       notifyListeners();
 
       /// 注销计时器
-      _cancelTimer();
+      cancelTimer();
     });
   }
 
   /// 注销[_timer]
-  void _cancelTimer() {
+  void cancelTimer() {
     _timer?.cancel();
     _timer = null;
   }
@@ -490,7 +493,8 @@ class VeVodPlayerControlsController extends ChangeNotifier {
 
   @override
   void notifyListeners() {
-    if (!_isDisposed) super.notifyListeners();
+    if (_isDisposed) return;
+    super.notifyListeners();
   }
 
   @override
@@ -499,52 +503,8 @@ class VeVodPlayerControlsController extends ChangeNotifier {
     _isDisposed = true;
 
     /// 注销计时器
-    _cancelTimer();
+    cancelTimer();
 
     super.dispose();
-  }
-}
-
-/// [VeVodPlayerControls]的默认隐藏时间
-const Duration kDefaultHideDuration = Duration(seconds: 3);
-
-/// 动画时长
-const Duration kAnimationDuration = Durations.medium2;
-
-/// 音量或屏幕亮度
-enum DragVerticalType {
-  /// 屏幕亮度
-  brightness(
-    Icons.brightness_low_rounded,
-    Icons.brightness_medium_rounded,
-    Icons.brightness_high_rounded,
-  ),
-
-  /// 音量
-  volume(
-    Icons.volume_mute_rounded,
-    Icons.volume_down_rounded,
-    Icons.volume_up_rounded,
-  );
-
-  const DragVerticalType(this.iconLow, this.iconMedium, this.iconHigh);
-
-  /// ≤ 0
-  final IconData iconLow;
-
-  /// > 0 and < .5
-  final IconData iconMedium;
-
-  /// ≥ .5
-  final IconData iconHigh;
-
-  IconData getIcon(double value) {
-    if (value <= 0) {
-      return iconLow;
-    } else if (value < .5) {
-      return iconMedium;
-    } else {
-      return iconHigh;
-    }
   }
 }

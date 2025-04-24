@@ -10,7 +10,6 @@ class ControlsVertical extends StatelessWidget {
     super.key,
     required this.value,
     required this.type,
-    required this.color,
   });
 
   /// 当前数据
@@ -18,9 +17,6 @@ class ControlsVertical extends StatelessWidget {
 
   /// 音量或屏幕亮度
   final DragVerticalType? type;
-
-  /// 图标颜色
-  final Color color;
 
   /// 进度条的高度
   static const double height = 6;
@@ -49,26 +45,13 @@ class ControlsVertical extends StatelessWidget {
   }
 
   Widget get _buildIcon {
-    final DragVerticalType? type = this.type;
-    if (type == null) return const SizedBox.shrink();
+    final Icon? icon = type?.getIcon(value);
+    if (icon == null) return const SizedBox.shrink();
 
+    const IconThemeData data = IconThemeData(size: 16, color: Colors.white);
     return Container(
       margin: const EdgeInsets.only(right: 8),
-      child: Icon(type.getIcon(value), size: 16, color: color),
+      child: IconTheme(data: data, child: icon),
     );
   }
-
-  /// Icon for volume.
-  List<IconData> get volumeIcons => <IconData>[
-        Icons.volume_mute_rounded,
-        Icons.volume_down_rounded,
-        Icons.volume_up_rounded,
-      ];
-
-  /// Icon for brightness.
-  List<IconData> get brightnessIcons => <IconData>[
-        Icons.brightness_low_rounded,
-        Icons.brightness_medium_rounded,
-        Icons.brightness_high_rounded,
-      ];
 }

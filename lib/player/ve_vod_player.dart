@@ -7,6 +7,7 @@
 library;
 
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -55,17 +56,6 @@ class VeVodPlayer extends StatefulWidget {
 }
 
 class _VeVodPlayerState extends State<VeVodPlayer> {
-  /// 监控全屏的状态变化
-  StreamSubscription<bool>? _fullScreenStream;
-
-  @override
-  void initState() {
-    /// 全屏相关
-    _fullScreenStream = controller._fullScreenStream.stream.listen(_listener);
-
-    super.initState();
-  }
-
   @override
   void didUpdateWidget(covariant VeVodPlayer oldWidget) {
     if (oldWidget.controller.uniqueId != widget.controller.uniqueId) {
@@ -74,53 +64,9 @@ class _VeVodPlayerState extends State<VeVodPlayer> {
 
       /// 初始化
       controller._initVodPlayer();
-
-      _fullScreenStream?.cancel();
-      _fullScreenStream = controller._fullScreenStream.stream.listen(_listener);
     }
 
     super.didUpdateWidget(oldWidget);
-  }
-
-  @override
-  void dispose() {
-    _fullScreenStream?.cancel();
-
-    super.dispose();
-  }
-
-  /// 全屏状态监听
-  Future<void> _listener(bool isFullScreen) async {
-    if (controller._isFull) {
-      unawaited(controller._toggleOrientations());
-      return;
-    }
-
-    if (isFullScreen) {
-      final PageRouteBuilder<dynamic> route = PageRouteBuilder<dynamic>(
-        pageBuilder: (_, Animation<double> animation, ___) => AnimatedBuilder(
-          animation: animation,
-          builder: (_, __) => VeVodPlayerFull(controller: controller),
-        ),
-        transitionsBuilder: (_, Animation<double> animation, __, Widget child) {
-          final CurvedAnimation parent =
-              CurvedAnimation(parent: animation, curve: Curves.fastOutSlowIn);
-          return SlideTransition(
-            position: Tween<Offset>(begin: Offset.zero, end: Offset.zero)
-                .animate(parent),
-            child: child,
-          );
-        },
-        fullscreenDialog: true,
-      );
-      await Navigator.push(context, route);
-    } else {
-      Future<void>.delayed(Durations.short1, () {
-        controller._toggleOrientations();
-        Navigator.pop(context);
-      });
-      await controller._setPlayerContainerView(controller.viewId);
-    }
   }
 
   @override
@@ -128,59 +74,43 @@ class _VeVodPlayerState extends State<VeVodPlayer> {
     final TTVideoPlayerView vodPlayerView = TTVideoPlayerView(
       key: Key('Ve_Vod_Player_${controller.hashCode}'),
       nativeViewType: controller._nativeViewType,
-      onPlatformViewCreated: controller._init,
+      onPlatformViewCreated: controller._setPlayerContainerView,
     );
 
-    return _buildBody(
-      build: (bool useSafe) {
+    return _buildSafeArea(
+      build: (Size? size, bool useSafe) {
         Widget child = vodPlayerView;
 
         if (useSafe) child = VeVodPlayerSafeArea(child: child);
 
-        return Container(
+        return ColoredBox(
           color: config.backgroundColor,
-          width: config.width,
-          height: config.height,
-          child: VeVodPlayerBody(controller: controller, child: child),
+          child: SizedBox.fromSize(
+            size: size ?? MediaQuery.sizeOf(context),
+            child: VeVodPlayerBody(controller: controller, child: child),
+          ),
         );
       },
     );
   }
 
-  /// 主体
-  Widget _buildBody({required Widget Function(bool) build}) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        final Size size = constraints.constrain(config.size);
-
-        /// 屏幕尺寸
-        final Size screenSize = MediaQuery.sizeOf(context);
-
-        if (size == screenSize) {
-          controller._isFull = true;
-
-          return ChangeNotifierProvider<VeVodPlayerController>.value(
-            value: controller,
-            builder: (_, __) => Selector<VeVodPlayerController, bool>(
-              builder: (_, bool isFullScreen, __) {
-                return PopScope(
-                  onPopInvoked: (bool didPop) {
-                    if (didPop) return;
-                    if (isFullScreen) {
-                      controller.toggleFullScreen(isFullScreen: false);
-                    }
-                  },
-                  canPop: !isFullScreen,
-                  child: build.call(!isFullScreen),
-                );
-              },
-              selector: (_, __) => __.value.isFullScreen,
-            ),
-          );
-        }
-
-        return build.call(true);
-      },
+  /// 是否构建安全区域的判断
+  Widget _buildSafeArea({required VeVodPlayerSafeAreaBuilder build}) {
+    return ChangeNotifierProvider<VeVodPlayerController>.value(
+      value: controller,
+      builder: (_, __) => Selector<VeVodPlayerController, bool>(
+        builder: (_, bool isFullScreen, __) => PopScope(
+          onPopInvokedWithResult: (bool didPop, dynamic result) {
+            if (didPop) return;
+            if (isFullScreen) controller.toggleFullScreen(isFullScreen: false);
+          },
+          canPop: !isFullScreen,
+          child: build.call(isFullScreen ? null : config.size, !isFullScreen),
+        ),
+        selector: (_, VeVodPlayerController controller) {
+          return controller.value.isFullScreen;
+        },
+      ),
     );
   }
 
@@ -188,3 +118,5 @@ class _VeVodPlayerState extends State<VeVodPlayer> {
 
   VeVodPlayerController get controller => widget.controller;
 }
+
+typedef VeVodPlayerSafeAreaBuilder = Widget Function(Size?, bool);

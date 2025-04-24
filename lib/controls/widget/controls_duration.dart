@@ -9,73 +9,40 @@ class ControlsDuration extends StatelessWidget {
   const ControlsDuration({
     super.key,
     required this.duration,
-    this.durationStyle,
     required this.position,
-    this.positionStyle,
   });
 
   /// 总时长
   final Duration duration;
 
-  /// [duration]文本样式
-  final TextStyle? durationStyle;
-
   /// 当前位置
   final Duration position;
-
-  /// [position]文本样式
-  final TextStyle? positionStyle;
 
   @override
   Widget build(BuildContext context) {
     final VeVodPlayerController controller = VeVodPlayerController.of(context);
     final VeVodPlayerControlsConfig config = controller.controlsConfig;
 
+    final TextStyle style = config.defaultTextStyle.copyWith(height: 1.2);
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        _buildText(
-          formatDuration(position),
-          style: positionStyle ?? config.defaultTextStyle,
+        _buildText(position, style: style),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: Text('/', style: style),
         ),
-        Text('/', style: durationStyle ?? config.defaultTextStyle),
-        _buildText(
-          formatDuration(duration),
-          style: durationStyle ?? config.defaultTextStyle,
-        ),
+        _buildText(duration, style: style),
       ],
     );
   }
 
-  Widget _buildText(String text, {TextStyle? style}) {
-    style = style?.copyWith(height: 1.4);
-    final Size size = _calculateMaxWidth(style);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: text.split('').map((String value) {
-        final Widget child = Text(value, style: style);
-        if (value == ':') return child;
-        return SizedBox.fromSize(size: size, child: Center(child: child));
-      }).toList(),
+  Widget _buildText(Duration duration, {TextStyle? style}) {
+    style = style?.copyWith(
+      fontFeatures: <FontFeature>[const FontFeature.tabularFigures()],
     );
-  }
-
-  /// 计算各方块最大宽度
-  Size _calculateMaxWidth(TextStyle? style) {
-    double maxWidth = double.minPositive;
-    double maxHeight = double.minPositive;
-
-    for (final String text in List<String>.generate(10, (_) => '$_')) {
-      final TextPainter painter = TextPainter(
-        text: TextSpan(text: text, style: style),
-        textDirection: TextDirection.ltr,
-        locale: WidgetsBinding.instance.platformDispatcher.locale,
-      )..layout();
-      maxWidth = math.max(maxWidth, painter.width);
-      maxHeight = math.max(maxHeight, painter.height);
-    }
-
-    return Size(maxWidth, maxHeight);
+    return Text(formatDuration(duration), style: style);
   }
 
   /// 通过[position]计算小时、分钟和秒
@@ -98,23 +65,19 @@ class ControlsDuration extends StatelessWidget {
 class ControlsProgress extends StatefulWidget {
   ControlsProgress({
     super.key,
-    ControlsProgressColors? colors,
+    VeVodPlayerProgressColors? colors,
     required this.value,
-    required this.height,
     required this.onDragStart,
     required this.onDragUpdate,
     required this.onDragEnd,
     required this.onTapUp,
-  }) : colors = colors ?? ControlsProgressColors();
+  }) : colors = colors ?? VeVodPlayerProgressColors();
 
   /// 进度条的颜色
-  final ControlsProgressColors colors;
+  final VeVodPlayerProgressColors colors;
 
   /// 视频相关数据
   final VeVodPlayerValue value;
-
-  /// 高度
-  final double height;
 
   /// 滑动开始，触发进度调节
   final GestureDragStartCallback onDragStart;
@@ -137,12 +100,12 @@ class _ControlsProgressState extends State<ControlsProgress> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
+        final double width =
+            constraints.constrainWidth(MediaQuery.sizeOf(context).width);
+
         final Widget child = Center(
           child: CustomPaint(
-            size: Size(
-              constraints.constrainWidth(MediaQuery.sizeOf(context).width),
-              math.max(widget.height, 4),
-            ),
+            size: Size(width, 10),
             painter: ControlsProgressPainter(
               value: widget.value,
               colors: widget.colors,
@@ -183,7 +146,7 @@ class ControlsProgressPainter extends CustomPainter {
   final VeVodPlayerValue value;
 
   /// 进度条的颜色
-  final ControlsProgressColors colors;
+  final VeVodPlayerProgressColors colors;
 
   /// 是否绘制瞄点
   final bool isPoints;
@@ -235,9 +198,17 @@ class ControlsProgressPainter extends CustomPainter {
     );
 
     if (isPoints) {
+      if (value.isDragProgress) {
+        canvas.drawCircle(
+          Offset(playedPart, halfHeight + height / 2),
+          height * 1.5,
+          Paint()..color = colors.handleMoreColor,
+        );
+      }
+
       canvas.drawCircle(
         Offset(playedPart, halfHeight + height / 2),
-        height * (value.isDragProgress ? 1.35 : 1),
+        height,
         Paint()..color = colors.handleColor,
       );
     }

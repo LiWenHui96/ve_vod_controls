@@ -94,7 +94,7 @@ class _VeVodPlayerBodyState extends State<VeVodPlayerBody>
 
     return Stack(
       children: <Widget>[
-        Hero(tag: 'Ve_Vod_Player_Body_${controller.hashCode}', child: child),
+        child,
         VeVodPlayerInherited(
           controller: controller,
           child: ChangeNotifierProvider<VeVodPlayerController>.value(
@@ -110,15 +110,11 @@ class _VeVodPlayerBodyState extends State<VeVodPlayerBody>
   Widget get _buildControls {
     return Selector<VeVodPlayerController, VeVodPlayerValue>(
       builder: (_, VeVodPlayerValue value, __) {
-        final List<Widget>? overlay = config.overlayBuilder
-            ?.call(context, controller, value)
-            ?.map((_) => VeVodPlayerSafeArea(child: Center(child: _)))
-            .toList();
+        final List<Widget>? overlay =
+            _buildSafeArea(builder: config.onOverlayBuilder, value: value);
 
-        final List<Widget>? placeholder = config.placeholderBuilder
-            ?.call(context, controller, value)
-            ?.map((_) => VeVodPlayerSafeArea(child: Center(child: _)))
-            .toList();
+        final List<Widget>? placeholder =
+            _buildSafeArea(builder: config.onPlaceholderBuilder, value: value);
 
         return Stack(
           fit: StackFit.expand,
@@ -129,56 +125,20 @@ class _VeVodPlayerBodyState extends State<VeVodPlayerBody>
           ],
         );
       },
-      selector: (_, __) => __.value,
+      selector: (_, VeVodPlayerController controller) => controller.value,
     );
   }
 
-  VeVodPlayerController get controller => widget.controller;
+  List<Widget>? _buildSafeArea({
+    required VeVodPlayerBuilder<List<Widget>?>? builder,
+    required VeVodPlayerValue value,
+  }) {
+    return builder?.call(context, controller, value)?.map((Widget child) {
+      return VeVodPlayerSafeArea(child: Center(child: child));
+    }).toList();
+  }
 
   VeVodPlayerConfig get config => controller.config;
-}
-
-class VeVodPlayerFull extends StatefulWidget {
-  const VeVodPlayerFull({super.key, required this.controller});
-
-  /// {@macro ve.vod.controls.VodPlayerController}
-  final VeVodPlayerController controller;
-
-  @override
-  State<VeVodPlayerFull> createState() => _VeVodPlayerFullState();
-}
-
-class _VeVodPlayerFullState extends State<VeVodPlayerFull> {
-  @override
-  void initState() {
-    super.initState();
-
-    controller._toggleOrientations();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final TTVideoPlayerView vodPlayerView = TTVideoPlayerView(
-      key: Key('Ve_Vod_Player_Full_${controller.hashCode}'),
-      nativeViewType: controller._nativeViewType,
-      onPlatformViewCreated: controller._init,
-    );
-
-    final Widget child = Scaffold(
-      resizeToAvoidBottomInset: false,
-      backgroundColor: controller.config.backgroundColor,
-      body: VeVodPlayerBody(controller: controller, child: vodPlayerView),
-    );
-
-    return PopScope(
-      onPopInvoked: (bool didPop) {
-        if (didPop) return;
-        controller.toggleFullScreen(isFullScreen: false);
-      },
-      canPop: false,
-      child: child,
-    );
-  }
 
   VeVodPlayerController get controller => widget.controller;
 }

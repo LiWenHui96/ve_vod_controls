@@ -11,8 +11,6 @@ class ControlsPlayPause extends StatefulWidget {
     this.decoration,
     required this.isPlaying,
     this.duration,
-    this.size,
-    this.color,
     this.onPressed,
   });
 
@@ -24,12 +22,6 @@ class ControlsPlayPause extends StatefulWidget {
 
   /// 动画的持续时间
   final Duration? duration;
-
-  /// [AnimatedIcon] 的尺寸
-  final double? size;
-
-  /// [AnimatedIcon] 的颜色
-  final Color? color;
 
   /// 点击事件
   final VoidCallback? onPressed;
@@ -69,10 +61,6 @@ class _ControlsPlayPauseState extends State<ControlsPlayPause>
   @override
   Widget build(BuildContext context) {
     final Widget child = IconButton(
-      iconSize: widget.size,
-      visualDensity: VisualDensity.comfortable,
-      padding: EdgeInsets.zero,
-      color: widget.color,
       onPressed: widget.onPressed,
       enableFeedback: true,
       icon: AnimatedIcon(

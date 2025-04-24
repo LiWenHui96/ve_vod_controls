@@ -17,16 +17,20 @@ class VeVodPlayerControlsTop extends StatelessWidget {
     final Widget leading = IconButton(
       onPressed: () async => Navigator.maybePop(context),
       tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-      icon: const Icon(Icons.arrow_back_ios),
+      icon: const Icon(Icons.arrow_back_ios_rounded),
     );
 
+    /// 是否展示返回按钮
+    final bool hasBackButton = config.hasBackButton &&
+        (value.isFullScreen || (ModalRoute.of(context)?.canPop ?? false));
+
     final List<Widget> children = <Widget>[
-      config.backButton ?? leading,
+      if (hasBackButton) config.backButton ?? leading,
       _buildTitle(context, config, value),
     ];
 
     final List<Widget>? actions =
-        config.actionsBuilder?.call(context, controller, value);
+        config.onActionsBuilder?.call(context, controller, value);
     if (actions != null && actions.isNotEmpty) children.addAll(actions);
 
     Widget child = IconButtonTheme(
@@ -34,6 +38,8 @@ class VeVodPlayerControlsTop extends StatelessWidget {
         style: IconButton.styleFrom(
           foregroundColor: config.foregroundColor,
           iconSize: config.iconSize,
+          padding: EdgeInsets.zero,
+          visualDensity: VisualDensity.compact,
         ),
       ),
       child: Row(children: children),

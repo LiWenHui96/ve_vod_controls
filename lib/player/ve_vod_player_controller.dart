@@ -12,10 +12,10 @@ part of 've_vod_player.dart';
 ///
 /// 实现 创建播放器、设置播放源 等基础功能，以及播放控制、设置自定义Header、设置填充模式、
 /// 设置旋转角度、设置镜像模式、设置循环播放、设置倍速播放、静音、调节音量、设置业务类型、
-/// 设置自定义标签、设置清晰度、播放私有加密视频、获取播放信息、播放状态回调 功能
+/// 设置自定义标签、设置清晰度、播放私有加密视频、获取播放信息、播放状态回调、纯音频播放 功能
 ///
 /// 后续支持高阶功能
-/// 纯音频播放、展示当前视频下载进度、短视频场景预加载和预渲染策略、自定义预加载等功能
+/// 展示当前视频下载进度、短视频场景预加载和预渲染策略、自定义预加载等功能
 ///
 /// https://www.volcengine.com/docs/4/1264702
 /// {@endtemplate}
@@ -43,19 +43,13 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   String? get uniqueId => source.getUniqueId;
 
   /// 创建 [VodPlayerFlutter] 实例
-  final VodPlayerFlutter _vodPlayer = VodPlayerFlutter();
+  late VodPlayerFlutter _vodPlayer;
 
   /// 屏幕亮度控制
-  final ScreenBrightness _brightness = ScreenBrightness();
-
-  /// 是否初始化成功
-  bool _isInitialized = false;
+  final ScreenBrightness _brightness = ScreenBrightness.instance;
 
   /// 是否为首次初始化
   bool _isFirstInit = true;
-
-  /// 播放器视图id
-  int viewId = -1;
 
   /// 本机视图类型，仅支持Android端
   NativeViewType _nativeViewType = NativeViewType.TextureView;
@@ -74,9 +68,6 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   final StreamController<bool> _fullScreenStream =
       StreamController<bool>.broadcast();
 
-  /// 是否占满屏幕
-  bool _isFull = false;
-
   bool _isDisposed = false;
 
   static VeVodPlayerController of(BuildContext context) => context
@@ -89,6 +80,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     if (!config.allowedScreenSleep) await WakelockPlus.enable();
 
     /// 创建播放器
+    _vodPlayer = VodPlayerFlutter();
     await _vodPlayer.createPlayer();
 
     /// 设置监听
@@ -100,25 +92,24 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     /// 设置[TTVideoPlayerView.nativeViewType]
     _nativeViewType = NativeViewType.TextureView;
 
-    if (!_isInitialized) {
-      _isInitialized = true;
-      if (!viewId.isNegative) unawaited(_init(viewId));
-    }
-
     /// 设置播放源
     await _vodPlayer.setMediaSource(source);
 
     await Future.wait(<Future<void>>[
       /// 将起播位置设置为[config.startAt]
-      setStartTimeMs(config.startAt),
+      _setStartTimeMs(config.startAt),
 
       /// 设置是否循环播放
       setLooping(config.looping),
 
       /// 设置填充模式
-      setScalingMode(
-        TTVideoEngineScalingMode.TTVideoEngineScalingModeAspectFit,
-      ),
+      setScalingMode(),
+
+      /// 设置业务类型
+      if (config.tag != null) _vodPlayer.setTag(config.tag!),
+
+      /// 设置自定义标签
+      if (config.subTag != null) _vodPlayer.setSubTag(config.subTag!),
     ]);
 
     if (config.autoInitialize || config.autoPlay) {
@@ -132,19 +123,6 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   }
 
   /// 执行初始化[TTVideoPlayerView]操作
-  Future<void> _init(int viewId) async {
-    if (!_isInitialized) {
-      this.viewId = viewId;
-      return;
-    }
-
-    /// 存储viewId
-    if (!value.isFullScreen) this.viewId = viewId;
-
-    /// 设置viewId
-    await _setPlayerContainerView(viewId);
-  }
-
   /// 设置[viewId]
   Future<void> _setPlayerContainerView(int viewId) async {
     await _vodPlayer.setPlayerContainerView(viewId);
@@ -153,9 +131,12 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   /// 播放
   Future<void> play() async {
     /// 当存在异常时，跳转到异常位置
-    if (value.hasError) await setStartTimeMs(value.position);
+    if (value.hasError) await _setStartTimeMs(value.position);
 
     await _vodPlayer.play();
+
+    /// 创建计时器，且不需要创建新的计时器
+    _createTimer(needCreateNew: false);
   }
 
   /// 暂停
@@ -169,9 +150,16 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   }
 
   /// 将起播位置设置为[moment]
-  Future<void> setStartTimeMs(Duration? moment) async {
-    if (moment == null || value.isInitialized) return;
-    await _vodPlayer.setStartTimeMs(moment.inMilliseconds.toDouble());
+  Future<void> _setStartTimeMs(Duration? moment) async {
+    if (moment == null) return;
+
+    if (value.isInitialized) {
+      /// 获取时长后，如果设置的起始位置超过视频时长，则恢复到初始位置
+      if (moment >= value.duration) moment = Duration.zero;
+      await seekTo(moment);
+    } else {
+      await _vodPlayer.setStartTimeMs(moment.inMilliseconds.toDouble());
+    }
   }
 
   /// 将当前播放设置为[moment]。
@@ -183,7 +171,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     ValueChanged<bool>? onCompleted,
     VoidCallback? onRenderCompleted,
   }) async {
-    if (moment == null) return;
+    if (moment == null || !value.isInitialized) return;
 
     _closePlaybackSpeed();
 
@@ -195,13 +183,11 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
       seekCompleted: (bool isSeekCompleted) {
         onCompleted?.call(isSeekCompleted);
 
-        value =
-            value.copyWith(isBuffering: !value.isCompleted && isSeekCompleted);
-
-        /// 设置失败情况下
-        if (!isSeekCompleted) {
-          value = value.copyWith(dragDuration: Duration.zero);
-        }
+        /// 进度调节完成，如果缓冲成功则清理[value.dragDuration]
+        value = value.copyWith(
+          isBuffering: !isSeekCompleted,
+          dragDuration: isSeekCompleted ? Duration.zero : null,
+        );
       },
       seekRenderCompleted: () {
         onRenderCompleted?.call();
@@ -215,8 +201,11 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   /// 设置播放请求中的自定义 HTTP Header
   Future<void> _setCustomHeader(Map<String, String>? map) async {
     if (map == null || map.isEmpty) return;
-    final Iterable<Future<void>> futures =
-        map.entries.map((_) => _vodPlayer.setCustomHeader(_.key, _.value));
+    final Iterable<Future<void>> futures = map.entries.map(
+      (MapEntry<String, String> entry) {
+        return _vodPlayer.setCustomHeader(entry.key, entry.value);
+      },
+    );
     await Future.wait(futures);
   }
 
@@ -225,7 +214,8 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   /// TTVideoEngineScalingModeAspectFit: 等比例适配，不会有变形，按照视频宽高等比适配画面，可能有黑边
   /// TTVideoEngineScalingModeAspectFill: 等比例填充，不会有变形，按照视频宽高等比充满画面，可能有画面裁切
   /// TTVideoEngineScalingModeFill: 拉伸填充，视频宽高比例与画面比例不一致，会导致画面变形
-  Future<void> setScalingMode(TTVideoEngineScalingMode mode) async {
+  Future<void> setScalingMode({TTVideoEngineScalingMode? mode}) async {
+    mode ??= TTVideoEngineScalingMode.TTVideoEngineScalingModeAspectFit;
     await _vodPlayer.setScalingMode(mode);
   }
 
@@ -319,15 +309,29 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   }
 
   /// 获取当前屏幕亮度
-  Future<double> get brightness => _brightness.current;
+  Future<double> get brightness async {
+    if (Platform.isAndroid && !(await _brightness.canChangeSystemBrightness)) {
+      return _brightness.application;
+    }
+    return _brightness.system;
+  }
 
   /// 设置屏幕亮度
   Future<void> setBrightness(double brightness) async {
-    await _brightness.setScreenBrightness(ui.clampDouble(brightness, 0, 1));
+    brightness = ui.clampDouble(brightness, 0, 1);
+    if (Platform.isAndroid && !(await _brightness.canChangeSystemBrightness)) {
+      await _brightness.setApplicationScreenBrightness(brightness);
+    } else {
+      await _brightness.setSystemScreenBrightness(brightness);
+    }
   }
 
   /// 重置屏幕亮度
-  Future<void> _resetScreenBrightness() => _brightness.resetScreenBrightness();
+  Future<void> _resetScreenBrightness() async {
+    if (Platform.isAndroid && !(await _brightness.canChangeSystemBrightness)) {
+      await _brightness.resetApplicationScreenBrightness();
+    }
+  }
 
   /// 设置是否正在调整显示亮度或音量
   void _setDragVertical(
@@ -392,32 +396,34 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     if (!value.isInitialized) return false;
 
     value = value.copyWith(isFullScreen: isFullScreen ?? !value.isFullScreen);
+    if (value.isFullScreen) {
+      config.onFullScreenChanged?.call(value.isFullScreen);
+      Future<void>.delayed(Durations.short1, _toggleOrientations);
+    } else {
+      _toggleOrientations();
+      Future<void>.delayed(Durations.short4, () {
+        config.onFullScreenChanged?.call(value.isFullScreen);
+      });
+    }
     _fullScreenStream.add(value.isFullScreen);
     return true;
   }
 
   /// 屏幕旋转
   Future<void> _toggleOrientations() async {
+    /// 重置系统 UI 模式
     await SystemChrome.setPreferredOrientations(<DeviceOrientation>[]);
-    if (value.isFullScreen) {
-      await SystemChrome.setEnabledSystemUIMode(
-        SystemUiMode.manual,
-        overlays: <SystemUiOverlay>[],
-      );
 
-      /// 进入全屏模式
-      await SystemChrome.setPreferredOrientations(orientations);
-    } else {
-      await SystemChrome.setEnabledSystemUIMode(
-        SystemUiMode.manual,
-        overlays: config.systemOverlaysExitFullScreen,
-      );
+    /// 设置系统 UI 模式
+    await SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: value.isFullScreen
+          ? <SystemUiOverlay>[]
+          : config.systemOverlaysExitFullScreen,
+    );
 
-      /// 退出全屏模式
-      await SystemChrome.setPreferredOrientations(
-        config.orientationsExitFullScreen,
-      );
-    }
+    /// 设置设备方向
+    await SystemChrome.setPreferredOrientations(orientations);
   }
 
   /// 初始全屏转换监听
@@ -428,12 +434,16 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     }
   }
 
-  /// 全屏后的设备方向
+  /// 全屏转换的设备方向
   List<DeviceOrientation> get orientations {
-    if (config.orientationsEnterFullScreen != null) {
-      return config.orientationsEnterFullScreen!;
+    if (value.isFullScreen) {
+      if (config.orientationsEnterFullScreen != null) {
+        return config.orientationsEnterFullScreen!;
+      }
+      return value._orientations;
+    } else {
+      return config.orientationsExitFullScreen;
     }
-    return value.orientations;
   }
 
   /// 切换 锁定状态
@@ -450,9 +460,8 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     final Duration duration = await _vodPlayer.duration;
     value = value.copyWith(duration: duration);
 
-    /// 获取时长后，如果设置的起始位置超过视频时长，则恢复到初始位置
-    final Duration? startAt = config.startAt;
-    if (startAt != null && startAt > duration) await seekTo(Duration.zero);
+    /// 设置起播位置，用于修复起播位置超过播放时长引发的错误
+    await _setStartTimeMs(config.startAt);
   }
 
   /// 获取播放进度/已缓冲的播放进度
@@ -492,17 +501,17 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     if (maxPreviewTime == null) return;
 
     final Duration position = value.position;
-    if (position >= maxPreviewTime && !value.isMaxPreviewTime) {
+    if (position >= maxPreviewTime && !value.isExceedsPreviewTime) {
       if (config.resetOnMaxPreviewEnd && value.isFullScreen) {
         toggleFullScreen(isFullScreen: false);
       }
 
-      value = value.copyWith(isMaxPreviewTime: true);
+      value = value.copyWith(isExceedsPreviewTime: true);
       _reset();
       await pause();
       await seekTo(maxPreviewTime);
-    } else if (position < maxPreviewTime && value.isMaxPreviewTime) {
-      value = value.copyWith(isMaxPreviewTime: false);
+    } else if (position < maxPreviewTime && value.isExceedsPreviewTime) {
+      value = value.copyWith(isExceedsPreviewTime: false);
       await play();
     }
   }
@@ -540,11 +549,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
         _getResolution();
 
         /// 完成初始化，即将开始播放。
-        value = value.copyWith(
-          isInitialized: true,
-          clearError: true,
-          isCompleted: false,
-        );
+        value = value.copyWith(clearError: true, isCompleted: false);
 
         /// 若仅开启自动初始化并且未开启自动播放，则暂停播放
         /// 否则无须暂停
@@ -590,11 +595,11 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
       }
       ..fetchedVideoModel = _getResolutions
       ..resolutionConfigCompletion = (
-        bool flag,
+        bool success,
         TTVideoEngineResolutionType completeResolution,
       ) {
         /// 切换清晰度成功
-        if (flag) value = value.copyWith(resolution: completeResolution);
+        if (success) value = value.copyWith(resolution: completeResolution);
       }
       ..didFinish = (TTError? error) {
         if (error != null) {
@@ -605,11 +610,24 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
         /// 重置
         _reset();
+
+        /// 注销计时器
+        _cancelTimer();
       };
 
-    /// 当 `_timer` 存在，且处于活跃状态时，注销计时器
-    if (_timer != null && _timer!.isActive) _cancelTimer();
+    /// 创建计时器
+    _createTimer();
+  }
 
+  /// 创建[_timer]
+  void _createTimer({bool needCreateNew = true}) {
+    /// 当 `_timer` 存在，且处于活跃状态时，注销计时器
+    if ((_timer != null && _timer!.isActive) || needCreateNew) _cancelTimer();
+
+    /// 如果计时器已存在，则无需生成新的计时器
+    if (_timer != null) return;
+
+    /// 生成新的计时器
     _timer = Timer.periodic(Durations.long2, (Timer timer) async {
       if (!timer.isActive) return;
 
@@ -678,14 +696,13 @@ class VeVodPlayerValue {
     this.size = Size.zero,
     this.position = Duration.zero,
     this.buffered = Duration.zero,
-    this.isInitialized = false,
     this.isReadyToDisplay = false,
     this.isPlaying = false,
     this.isBuffering = false,
     this.isLooping = false,
     this.isLock = false,
     this.isFullScreen = false,
-    this.isMaxPreviewTime = false,
+    this.isExceedsPreviewTime = false,
     this.playbackSpeed = 1.0,
     this.isPlaybackSpeed = false,
     this.isMaxPlaybackSpeed = false,
@@ -720,9 +737,6 @@ class VeVodPlayerValue {
   /// 缓冲时长
   final Duration buffered;
 
-  /// 是否已加载并准备播放。
-  final bool isInitialized;
-
   /// 首帧渲染是否完成
   final bool isReadyToDisplay;
 
@@ -745,7 +759,7 @@ class VeVodPlayerValue {
   final bool isFullScreen;
 
   /// 是否超过试看时间
-  final bool isMaxPreviewTime;
+  final bool isExceedsPreviewTime;
 
   /// 当前播放速度
   final double playbackSpeed;
@@ -786,65 +800,19 @@ class VeVodPlayerValue {
   /// 如果正在循环，则不会更新
   final bool isCompleted;
 
-  /// 提示是否处于错误状态
-  /// 如果为true，则[error]包含问题信息
-  bool get hasError => error != null;
-
-  /// Device orientation after full screen.
-  List<DeviceOrientation> get orientations {
-    if (size.width > size.height) {
-      return <DeviceOrientation>[
-        DeviceOrientation.landscapeLeft,
-        DeviceOrientation.landscapeRight,
-      ];
-    } else if (size.width < size.height) {
-      return <DeviceOrientation>[
-        DeviceOrientation.portraitUp,
-        DeviceOrientation.portraitDown,
-      ];
-    } else {
-      return DeviceOrientation.values;
-    }
-  }
-
-  /// 可调节的时间间隔
-  Duration get dragTotalDuration {
-    if (duration < const Duration(minutes: 1)) {
-      return const Duration(seconds: 10);
-    } else if (duration < const Duration(minutes: 10)) {
-      return const Duration(minutes: 1);
-    } else if (duration < const Duration(minutes: 30)) {
-      return const Duration(minutes: 5);
-    } else if (duration < const Duration(hours: 1)) {
-      return const Duration(minutes: 10);
-    } else {
-      return const Duration(minutes: 15);
-    }
-  }
-
-  /// 播放“完成” - 播放完成、存在异常、试看时间已过
-  bool get allowControls => isCompleted || isMaxPreviewTime;
-
-  /// 是否展示控制器 - 顶部
-  bool get allowControlsTop => !isLock && !isDragProgress;
-
-  /// 是否展示控制器 - 底部
-  bool get allowControlsBottom => !isLock && !isCompleted && !isMaxPreviewTime;
-
   /// 返回与当前实例具有相同值新实例，但作为参数传递给[copyWith]，任何重写除外
   VeVodPlayerValue copyWith({
     Duration? duration,
     Size? size,
     Duration? position,
     Duration? buffered,
-    bool? isInitialized,
     bool? isReadyToDisplay,
     bool? isPlaying,
     bool? isBuffering,
     bool? isLooping,
     bool? isLock,
     bool? isFullScreen,
-    bool? isMaxPreviewTime,
+    bool? isExceedsPreviewTime,
     double? playbackSpeed,
     bool? isPlaybackSpeed,
     bool? isMaxPlaybackSpeed,
@@ -865,14 +833,13 @@ class VeVodPlayerValue {
       size: size ?? this.size,
       position: position ?? this.position,
       buffered: buffered ?? this.buffered,
-      isInitialized: isInitialized ?? this.isInitialized,
       isReadyToDisplay: isReadyToDisplay ?? this.isReadyToDisplay,
       isPlaying: isPlaying ?? this.isPlaying,
       isBuffering: isBuffering ?? this.isBuffering,
       isLooping: isLooping ?? this.isLooping,
       isLock: isLock ?? this.isLock,
       isFullScreen: isFullScreen ?? this.isFullScreen,
-      isMaxPreviewTime: isMaxPreviewTime ?? this.isMaxPreviewTime,
+      isExceedsPreviewTime: isExceedsPreviewTime ?? this.isExceedsPreviewTime,
       playbackSpeed: playbackSpeed ?? this.playbackSpeed,
       isPlaybackSpeed: isPlaybackSpeed ?? this.isPlaybackSpeed,
       isMaxPlaybackSpeed: isMaxPlaybackSpeed ?? this.isMaxPlaybackSpeed,
@@ -890,6 +857,81 @@ class VeVodPlayerValue {
     );
   }
 
+  /// 是否已加载并准备播放。
+  bool get isInitialized => duration > Duration.zero;
+
+  /// 提示是否处于错误状态
+  /// 如果为true，则[error]包含问题信息
+  bool get hasError => error != null;
+
+  /// Device orientation after full screen.
+  List<DeviceOrientation> get _orientations {
+    if (size.width > size.height) {
+      return <DeviceOrientation>[
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ];
+    } else if (size.width < size.height) {
+      return <DeviceOrientation>[
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ];
+    } else {
+      return DeviceOrientation.values;
+    }
+  }
+
+  /// 可调节的时间间隔
+  Duration get _dragTotalDuration {
+    if (duration < const Duration(minutes: 1)) {
+      return const Duration(seconds: 10);
+    } else if (duration < const Duration(minutes: 10)) {
+      return const Duration(minutes: 1);
+    } else if (duration < const Duration(minutes: 30)) {
+      return const Duration(minutes: 5);
+    } else if (duration < const Duration(hours: 1)) {
+      return const Duration(minutes: 10);
+    } else {
+      return const Duration(minutes: 15);
+    }
+  }
+
+  /// 展示 “播放” 按钮
+  bool get _hasPlayButton =>
+      isReadyToDisplay &&
+      !isCompleted &&
+      !isPlaying &&
+      !isBuffering &&
+      !isExceedsPreviewTime &&
+      !isDragVertical &&
+      !isDragProgress;
+
+  /// 播放“完成” - 播放完成、存在异常、试看时间已过
+  bool get _allowControls => isCompleted || isExceedsPreviewTime;
+
+  /// 是否展示控制器 - 顶部
+  bool get _allowControlsTop => !isLock && !isDragProgress;
+
+  /// 是否展示控制器 - 中部
+  bool get _allowControlsCenter =>
+      !isCompleted && !isDragProgress && isFullScreen;
+
+  /// 是否展示控制器 - 底部
+  bool get _allowControlsBottom =>
+      !isLock && !isCompleted && !isExceedsPreviewTime;
+
+  /// 是否可以执行操作
+  bool get _allowPressed => isInitialized && !isLock && !isExceedsPreviewTime;
+
+  /// 是否不可触发 长按 操作
+  bool get _allowLongPress => _allowPressed && isPlaying && !isMaxPlaybackSpeed;
+
+  /// 是否可以触发 横/纵向 滑动操作
+  bool get _allowPanDrag => _allowPressed && !isCompleted && !isDragVertical;
+
+  /// 是否可以点击进度条
+  bool get _allowTapProgress => _allowPressed && !isBuffering && !isCompleted;
+
   @override
   String toString() {
     return '${objectRuntimeType(this, 'VodPlayerValue')}('
@@ -898,14 +940,13 @@ class VeVodPlayerValue {
         'size: $size, '
         'position: $position, '
         'buffered: $buffered, '
-        'isInitialized: $isInitialized, '
         'isReadyToDisplay: $isReadyToDisplay, '
         'isPlaying: $isPlaying, '
         'isBuffering: $isBuffering, '
         'isLock: $isLock, '
         'isLooping: $isLooping, '
         'isFullScreen: $isFullScreen, '
-        'isMaxPreviewTime: $isMaxPreviewTime, '
+        'isExceedsPreviewTime: $isExceedsPreviewTime, '
         'playbackSpeed: $playbackSpeed, '
         'isPlaybackSpeed: $isPlaybackSpeed, '
         'isMaxPlaybackSpeed: $isMaxPlaybackSpeed, '
@@ -930,14 +971,13 @@ class VeVodPlayerValue {
           size == other.size &&
           position == other.position &&
           buffered == other.buffered &&
-          isInitialized == other.isInitialized &&
           isReadyToDisplay == other.isReadyToDisplay &&
           isPlaying == other.isPlaying &&
           isBuffering == other.isBuffering &&
           isLock == other.isLock &&
           isLooping == other.isLooping &&
           isFullScreen == other.isFullScreen &&
-          isMaxPreviewTime == other.isMaxPreviewTime &&
+          isExceedsPreviewTime == other.isExceedsPreviewTime &&
           playbackSpeed == other.playbackSpeed &&
           isPlaybackSpeed == other.isPlaybackSpeed &&
           isMaxPlaybackSpeed == other.isMaxPlaybackSpeed &&
@@ -955,14 +995,13 @@ class VeVodPlayerValue {
   int get hashCode => Object.hash(
         size,
         Object.hash(duration, position, buffered),
-        isInitialized,
         isReadyToDisplay,
         isPlaying,
         isBuffering,
         isLock,
         isLooping,
         isFullScreen,
-        isMaxPreviewTime,
+        isExceedsPreviewTime,
         Object.hash(playbackSpeed, isPlaybackSpeed, isMaxPlaybackSpeed),
         Object.hash(resolution, resolutions),
         Object.hash(isDragVertical, dragVerticalType, dragVerticalValue),

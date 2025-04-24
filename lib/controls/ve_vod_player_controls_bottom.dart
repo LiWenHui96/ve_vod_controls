@@ -56,20 +56,19 @@ class VeVodPlayerControlsBottom extends StatelessWidget {
     final Widget playPause = ControlsPlayPause(
       isPlaying: value.isPlaying,
       duration: kAnimationDuration,
-      size: config.iconSize,
-      color: config.foregroundColor,
       onPressed: onPlayOrPause,
     );
 
     /// 播放进度
-    final Widget duration =
-        ControlsDuration(position: value.position, duration: value.duration);
+    final Widget duration = ControlsDuration(
+      position: value.position,
+      duration: value.duration,
+    );
 
     /// 播放进度条
     final Widget progressBar = ControlsProgress(
       colors: config.progressColors,
       value: value,
-      height: config.iconSize,
       onDragStart: onDragStart,
       onDragUpdate: onDragUpdate,
       onDragEnd: onDragEnd,
@@ -78,10 +77,6 @@ class VeVodPlayerControlsBottom extends StatelessWidget {
 
     /// 全屏控制按钮
     final Widget fullScreenButton = IconButton(
-      iconSize: config.iconSize,
-      visualDensity: VisualDensity.comfortable,
-      padding: EdgeInsets.zero,
-      color: config.foregroundColor,
       onPressed: () {
         onImmVisible?.call();
         onFullScreen?.call();
@@ -92,10 +87,7 @@ class VeVodPlayerControlsBottom extends StatelessWidget {
       icon: const Icon(Icons.fullscreen),
     );
 
-    Widget child = Padding(
-      padding: const EdgeInsets.only(left: 16),
-      child: progressBar,
-    );
+    Widget child = progressBar;
 
     /// 屏幕方向
     final Orientation orientation = MediaQuery.orientationOf(context);
@@ -108,7 +100,10 @@ class VeVodPlayerControlsBottom extends StatelessWidget {
         onVisible: onVisible,
       );
 
-      child = Row(children: <Widget>[duration, Expanded(child: child)]);
+      child = Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: child,
+      );
 
       child = Column(
         children: <Widget>[
@@ -116,7 +111,10 @@ class VeVodPlayerControlsBottom extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              playPause,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[playPause, duration],
+              ),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
@@ -128,7 +126,15 @@ class VeVodPlayerControlsBottom extends StatelessWidget {
           ),
         ],
       );
+
+      final EdgeInsets padding = MediaQuery.paddingOf(context);
+      child = Padding(
+        padding: EdgeInsets.only(bottom: padding.bottom / 4),
+        child: child,
+      );
     } else if (orientation == Orientation.portrait) {
+      child = Padding(padding: const EdgeInsets.only(left: 12), child: child);
+
       child = Row(
         children: <Widget>[
           playPause,
@@ -139,13 +145,17 @@ class VeVodPlayerControlsBottom extends StatelessWidget {
       );
     }
 
-    final EdgeInsets padding = MediaQuery.paddingOf(context);
-    if (orientation == Orientation.landscape) {
-      child = Padding(
-        padding: EdgeInsets.only(bottom: padding.bottom / 4),
-        child: child,
-      );
-    }
+    child = IconButtonTheme(
+      data: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: config.foregroundColor,
+          iconSize: config.iconSize,
+          padding: EdgeInsets.zero,
+          visualDensity: VisualDensity.compact,
+        ),
+      ),
+      child: child,
+    );
 
     return DecoratedBox(
       decoration: BoxDecoration(
