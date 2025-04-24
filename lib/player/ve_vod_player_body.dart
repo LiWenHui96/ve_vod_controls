@@ -84,25 +84,35 @@ class _VeVodPlayerBodyState extends State<VeVodPlayerBody>
 
   @override
   Widget build(BuildContext context) {
-    final Widget child = InteractiveViewer(
-      maxScale: config.maxScale,
-      minScale: config.minScale,
-      panEnabled: config.panEnabled,
-      scaleEnabled: config.scaleEnabled,
-      child: widget.child,
-    );
-
-    return Stack(
-      children: <Widget>[
-        child,
-        VeVodPlayerInherited(
-          controller: controller,
-          child: ChangeNotifierProvider<VeVodPlayerController>.value(
-            value: controller,
-            builder: (_, __) => _buildControls,
+    return ChangeNotifierProvider<VeVodPlayerController>.value(
+      value: controller,
+      builder: (_, __) => Stack(
+        children: <Widget>[
+          InteractiveViewer(
+            maxScale: config.maxScale,
+            minScale: config.minScale,
+            panEnabled: config.panEnabled,
+            scaleEnabled: config.scaleEnabled,
+            child: _buildBody,
           ),
-        ),
-      ],
+          VeVodPlayerInherited(controller: controller, child: _buildControls),
+        ],
+      ),
+    );
+  }
+
+  /// 视频主体
+  Widget get _buildBody {
+    return Selector<VeVodPlayerController, bool>(
+      builder: (_, bool isFullScreen, __) {
+        return VeVodPlayerSafeArea.insert(
+          useSafe: !isFullScreen,
+          child: widget.child,
+        );
+      },
+      selector: (_, VeVodPlayerController controller) {
+        return controller.value.isFullScreen;
+      },
     );
   }
 
@@ -155,6 +165,17 @@ class VeVodPlayerSafeArea extends StatefulWidget {
     this.maintainBottomViewPadding = false,
     required this.child,
   });
+
+  const VeVodPlayerSafeArea.insert({
+    super.key,
+    bool useSafe = true,
+    this.minimum = EdgeInsets.zero,
+    this.maintainBottomViewPadding = false,
+    required this.child,
+  })  : left = useSafe,
+        top = useSafe,
+        right = useSafe,
+        bottom = useSafe;
 
   /// Whether to avoid system intrusions on the left.
   final bool left;

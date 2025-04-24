@@ -61,9 +61,6 @@ class _VeVodPlayerState extends State<VeVodPlayer> {
     if (oldWidget.controller.uniqueId != widget.controller.uniqueId) {
       /// 注销
       oldWidget.controller.dispose();
-
-      /// 初始化
-      controller._initVodPlayer();
     }
 
     super.didUpdateWidget(oldWidget);
@@ -77,39 +74,33 @@ class _VeVodPlayerState extends State<VeVodPlayer> {
       onPlatformViewCreated: controller._init,
     );
 
-    return _buildSafeArea(
-      build: (Size? size, bool useSafe) {
-        Widget child = vodPlayerView;
-
-        if (useSafe) child = VeVodPlayerSafeArea(child: child);
-
-        return ColoredBox(
-          color: config.backgroundColor,
-          child: SizedBox.fromSize(
-            size: size ?? MediaQuery.sizeOf(context),
-            child: VeVodPlayerBody(controller: controller, child: child),
-          ),
-        );
-      },
+    return ColoredBox(
+      color: controller.config.backgroundColor,
+      child: _buildPopScope(view: vodPlayerView),
     );
   }
 
   /// 是否构建安全区域的判断
-  Widget _buildSafeArea({required VeVodPlayerSafeAreaBuilder build}) {
+  Widget _buildPopScope({required TTVideoPlayerView view}) {
     return ChangeNotifierProvider<VeVodPlayerController>.value(
       value: controller,
-      builder: (_, __) => Selector<VeVodPlayerController, bool>(
-        builder: (_, bool isFullScreen, __) => PopScope(
+      builder: (_, __) => Selector<VeVodPlayerController, (Size?, bool)>(
+        builder: (_, (Size?, bool) data, Widget? child) => PopScope(
           onPopInvokedWithResult: (bool didPop, dynamic result) {
             if (didPop) return;
-            if (isFullScreen) controller.toggleFullScreen(isFullScreen: false);
+            if (data.$2) controller.toggleFullScreen(isFullScreen: false);
           },
-          canPop: !isFullScreen,
-          child: build.call(isFullScreen ? null : config.size, !isFullScreen),
+          canPop: !data.$2,
+          child: SizedBox.fromSize(
+            size: data.$1 ?? MediaQuery.sizeOf(context),
+            child: child,
+          ),
         ),
         selector: (_, VeVodPlayerController controller) {
-          return controller.value.isFullScreen;
+          final bool isFullScreen = controller.value.isFullScreen;
+          return (isFullScreen ? null : config.size, isFullScreen);
         },
+        child: VeVodPlayerBody(controller: controller, child: view),
       ),
     );
   }
