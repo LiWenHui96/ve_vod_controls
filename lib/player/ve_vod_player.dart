@@ -74,7 +74,7 @@ class _VeVodPlayerState extends State<VeVodPlayer> {
     final TTVideoPlayerView vodPlayerView = TTVideoPlayerView(
       key: Key('Ve_Vod_Player_${controller.hashCode}'),
       nativeViewType: controller._nativeViewType,
-      onPlatformViewCreated: controller._setPlayerContainerView,
+      onPlatformViewCreated: controller._init,
     );
 
     return _buildSafeArea(

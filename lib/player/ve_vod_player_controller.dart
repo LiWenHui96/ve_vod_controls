@@ -26,9 +26,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     VeVodPlayerControlsConfig? controlsConfig,
   })  : config = config ?? VeVodPlayerConfig(),
         controlsConfig = controlsConfig ?? VeVodPlayerControlsConfig(),
-        super(const VeVodPlayerValue.uninitialized()) {
-    _initVodPlayer();
-  }
+        super(const VeVodPlayerValue.uninitialized());
 
   /// 播放源
   final TTVideoEngineMediaSource source;
@@ -124,7 +122,8 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
   /// 执行初始化[TTVideoPlayerView]操作
   /// 设置[viewId]
-  Future<void> _setPlayerContainerView(int viewId) async {
+  Future<void> _init(int viewId) async {
+    await _initVodPlayer();
     await _vodPlayer.setPlayerContainerView(viewId);
   }
 
@@ -461,7 +460,8 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     value = value.copyWith(duration: duration);
 
     /// 设置起播位置，用于修复起播位置超过播放时长引发的错误
-    await _setStartTimeMs(config.startAt);
+    final Duration? startAt = config.startAt;
+    if (startAt != null && startAt > duration) await _setStartTimeMs(startAt);
   }
 
   /// 获取播放进度/已缓冲的播放进度
@@ -604,15 +604,15 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
       ..didFinish = (TTError? error) {
         if (error != null) {
           value = value.copyWith(error: error);
-        } else {
-          if (!value.isLooping) _setIsCompleted(true);
+
+          /// 注销计时器
+          _cancelTimer();
+        } else if (!value.isLooping) {
+          _setIsCompleted(true);
         }
 
         /// 重置
         _reset();
-
-        /// 注销计时器
-        _cancelTimer();
       };
 
     /// 创建计时器

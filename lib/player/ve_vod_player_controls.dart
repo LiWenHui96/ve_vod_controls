@@ -177,6 +177,25 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
   Widget get _buildOperation {
     Widget? child;
 
+    if (value.hasError) {
+      child = GestureDetector(
+        onTap: () {
+          controller
+            ..seekTo(Duration.zero)
+            .._setIsCompleted(false);
+          togglePlayPause();
+        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Icon(Icons.refresh_rounded, color: Colors.white),
+            const SizedBox(height: 4),
+            Text('播放失败', style: config.defaultTextStyle),
+          ],
+        ),
+      );
+    }
+
     if (value.isExceedsPreviewTime) {
       child = config.onMaxPreviewTimeBuilder?.call(context, controller, value);
       child ??= Text('试看结束', style: config.defaultTextStyle);
@@ -217,7 +236,9 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
 
   /// 提示组件
   Widget get _buildTooltip {
-    if (value.isExceedsPreviewTime) return Container(color: Colors.black);
+    if (value.hasError || value.isExceedsPreviewTime) {
+      return Container(color: Colors.black);
+    }
     if (value.isCompleted) {
       return Container(color: config.toolTipBackgroundColor);
     }
