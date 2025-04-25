@@ -41,6 +41,14 @@ ve_vod:
 3. Java 8 支持
 4. [权限声明](https://www.volcengine.com/docs/4/65774#%E6%AD%A5%E9%AA%A4-4%EF%BC%9A%E5%A3%B0%E6%98%8E%E6%9D%83%E9%99%90)
 5. [混淆规则](https://www.volcengine.com/docs/4/65774#%E6%AD%A5%E9%AA%A4-5%EF%BC%9A%E9%85%8D%E7%BD%AE%E6%B7%B7%E6%B7%86%E8%A7%84%E5%88%99)
+6. 关于音量问题，如果使用系统音量控制（默认使用），则需修改 `ve_vod` 内 `TTVideoEngineBridge.java:691` 添加
+```java
+    float maxVolume = mVideoEngine.getMaxVolume();
+    float volume = mVideoEngine.getVolume();
+    if (volume >= 0 && volume <= maxVolume) {
+        volume = volume / maxVolume;
+    }
+```
 
 > ⚠️ 特别注意：
 > 
