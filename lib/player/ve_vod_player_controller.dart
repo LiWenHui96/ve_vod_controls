@@ -98,7 +98,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
       _setStartTimeMs(config.startAt),
 
       /// 设置是否循环播放
-      setLooping(config.looping),
+      if (!Platform.isAndroid) setLooping(config.looping),
 
       /// 设置填充模式
       setScalingMode(),
@@ -607,6 +607,8 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
           /// 注销计时器
           _cancelTimer();
+        } else if (Platform.isAndroid && config.looping) {
+          play();
         } else if (!value.isLooping) {
           _setIsCompleted(true);
         }
