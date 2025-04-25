@@ -40,6 +40,7 @@ class ControlsDuration extends StatelessWidget {
 
   Widget _buildText(Duration duration, {TextStyle? style}) {
     style = style?.copyWith(
+      fontFamily: 'RobotoMono',
       fontFeatures: <FontFeature>[const FontFeature.tabularFigures()],
     );
     return Text(formatDuration(duration), style: style);
