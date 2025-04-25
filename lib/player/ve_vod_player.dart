@@ -28,6 +28,8 @@ part 've_vod_player_controller.dart';
 
 part 've_vod_player_controls.dart';
 
+part 've_vod_player_value.dart';
+
 /// {@template ve.vod.controls.VodPlayer}
 /// 视频播放器
 /// 以火山云视频点播Flutter为基石，携带有控制器等功能
