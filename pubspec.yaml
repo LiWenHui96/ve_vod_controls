@@ -1,5 +1,5 @@
 name: ve_vod_controls
-description: "基于ve_vod封装的视频播放器，携带控制器"
+description: "A video player encapsulated based on ve_vod plug-in, with controller and basic operations."
 version: 1.1.0
 homepage: https://github.com/LiWenHui96
 repository: https://github.com/LiWenHui96/ve_vod_controls

@@ -35,7 +35,7 @@ class ControlsVertical extends StatelessWidget {
             child: LinearProgressIndicator(
               value: value,
               color: Colors.white,
-              backgroundColor: Colors.white.withOpacity(.5),
+              backgroundColor: const Color.fromRGBO(255, 255, 255, .5),
               minHeight: height,
             ),
           ),

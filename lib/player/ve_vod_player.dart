@@ -42,7 +42,7 @@ class VeVodPlayer extends StatefulWidget {
   ///
   /// example:
   /// MaterialApp(
-  ///   navigatorObservers: <NavigatorObserver>[
+  ///   navigatorObservers: [
   ///     ...
   ///     VeVodPlayer.observer,
   ///     ...
