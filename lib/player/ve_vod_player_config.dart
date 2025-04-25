@@ -269,7 +269,7 @@ class VeVodPlayerProgressColors {
     this.playedColor = const Color.fromRGBO(255, 255, 255, 1),
     this.bufferedColor = const Color.fromRGBO(255, 255, 255, .6),
     this.handleColor = const Color.fromRGBO(255, 255, 255, 1),
-  }) : handleMoreColor = handleColor.withOpacity(.7);
+  }) : handleMoreColor = const Color.fromRGBO(255, 255, 255, .7);
 
   /// [backgroundColor] defaults to white at 30% opacity. This is the background
   /// color behind both [playedColor] and [bufferedColor] to denote the total

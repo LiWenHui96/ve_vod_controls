@@ -209,8 +209,8 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
         },
         child: Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(.85),
+          decoration: const BoxDecoration(
+            color: Color.fromRGBO(255, 255, 255, .85),
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.refresh_rounded),
@@ -345,7 +345,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
 
   /// 纵向滑动开始，触发音量/亮度调节
   Future<void> onVerticalDragStart(DragStartDetails details) async {
-    if (!config.allowVolumeOrBrightness || !value._allowPanDrag) {
+    if (!config.allowVolumeOrBrightness || !value._allowVerticalDrag) {
       toggleVisible(visible: true);
       return;
     }
@@ -386,7 +386,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
 
   /// 横向滑动开始，触发播放进度调节
   void onHorizontalDragStart(DragStartDetails details) {
-    if (!config.allowProgress || !value._allowPanDrag) {
+    if (!config.allowProgress || !value._allowHorizontalDrag) {
       toggleVisible(visible: true);
       return;
     }

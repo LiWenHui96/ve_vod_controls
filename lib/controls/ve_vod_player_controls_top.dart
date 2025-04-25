@@ -21,8 +21,8 @@ class VeVodPlayerControlsTop extends StatelessWidget {
     );
 
     /// 是否展示返回按钮
-    final bool hasBackButton = config.hasBackButton &&
-        (value.isFullScreen || (ModalRoute.of(context)?.canPop ?? false));
+    final bool hasBackButton = value.isFullScreen ||
+        (config.hasBackButton && (ModalRoute.of(context)?.canPop ?? false));
 
     final List<Widget> children = <Widget>[
       if (hasBackButton) config.backButton ?? leading,

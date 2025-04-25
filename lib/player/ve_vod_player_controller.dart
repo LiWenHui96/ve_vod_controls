@@ -117,6 +117,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
       await play();
     }
 
+    /// 在启动时开启全屏播放
     if (config.fullScreenAtStartUp) addListener(_fullScreenListener);
   }
 
@@ -255,9 +256,15 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     }
 
     if (hasTimer) {
-      _playbackSpeedTimer = Timer.periodic(Durations.extralong4 * 2, (_) async {
-        _closePlaybackSpeed();
-      });
+      _playbackSpeedTimer = Timer.periodic(
+        Durations.extralong4 * 2,
+        (Timer timer) {
+          final bool flag = _handlePlaybackSpeedTimer(timer);
+          if (flag) return;
+
+          _closePlaybackSpeed();
+        },
+      );
     } else {
       /// 记录默认播放速度
       if (speed == maxPlaybackSpeed) {
@@ -647,6 +654,17 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     _timer = null;
   }
 
+  /// 处理[_playbackSpeedTimer]
+  bool _handlePlaybackSpeedTimer(Timer timer) {
+    if (timer.isActive) {
+      timer.cancel();
+      _cancelPlaybackSpeedTimer();
+    } else {
+      return true;
+    }
+    return false;
+  }
+
   /// 注销[_playbackSpeedTimer]
   void _cancelPlaybackSpeedTimer() {
     _playbackSpeedTimer?.cancel();
@@ -905,6 +923,7 @@ class VeVodPlayerValue {
       !isPlaying &&
       !isBuffering &&
       !isExceedsPreviewTime &&
+      !isPlaybackSpeed &&
       !isDragVertical &&
       !isDragProgress;
 
@@ -928,8 +947,13 @@ class VeVodPlayerValue {
   /// 是否不可触发 长按 操作
   bool get _allowLongPress => _allowPressed && isPlaying && !isMaxPlaybackSpeed;
 
-  /// 是否可以触发 横/纵向 滑动操作
-  bool get _allowPanDrag => _allowPressed && !isCompleted && !isDragVertical;
+  /// 是否可以触发纵向滑动操作
+  bool get _allowVerticalDrag =>
+      _allowPressed && !isCompleted && !isDragVertical;
+
+  /// 是否可以触发横向滑动操作
+  bool get _allowHorizontalDrag =>
+      _allowPressed && !isCompleted && !isDragProgress;
 
   /// 是否可以点击进度条
   bool get _allowTapProgress => _allowPressed && !isBuffering && !isCompleted;
