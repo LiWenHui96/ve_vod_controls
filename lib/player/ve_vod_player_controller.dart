@@ -347,7 +347,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   }) {
     if (value.isPlaybackSpeed) _closePlaybackSpeed();
 
-    value = value.copyWith(
+    value = value._copyWith(
       isDragVertical: isDragVertical,
       clearDragVerticalType: !isDragVertical,
       dragVerticalType: type,
@@ -357,7 +357,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
   /// 设置当前值（亮度或音量）
   void _setDragVerticalValue(double dragVerticalValue) {
-    value = value.copyWith(dragVerticalValue: dragVerticalValue);
+    value = value._copyWith(dragVerticalValue: dragVerticalValue);
   }
 
   /// 设置是否正在调整播放进度
@@ -531,7 +531,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
       isLock: false,
       isPlaybackSpeed: false,
       isMaxPlaybackSpeed: false,
-      isDragVertical: false,
+      clearDrag: true,
       isDragProgress: false,
       dragDuration: Duration.zero,
     );

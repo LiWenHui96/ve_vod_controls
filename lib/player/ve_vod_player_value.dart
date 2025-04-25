@@ -5,9 +5,131 @@
 
 part of 've_vod_player.dart';
 
-@immutable
-class VeVodPlayerValue {
+class VeVodPlayerValue extends _VeVodPlayerValue {
   const VeVodPlayerValue({
+    required super.duration,
+    super.size,
+    super.position,
+    super.buffered,
+    super.isReadyToDisplay,
+    super.isPlaying,
+    super.isBuffering,
+    super.isLooping,
+    super.isLock,
+    super.isFullScreen,
+    super.isExceedsPreviewTime,
+    super.playbackSpeed = 1.0,
+    super.isPlaybackSpeed,
+    super.isMaxPlaybackSpeed,
+    super.isMuted,
+    super.resolution,
+    super.resolutions,
+    super.isDragVertical,
+    super.dragVerticalType,
+    super.dragVerticalValue,
+    super.isDragProgress,
+    super.dragDuration,
+    super.error,
+    super.isCompleted,
+  });
+
+  /// 返回尚未加载的实例
+  const VeVodPlayerValue.uninitialized() : this(duration: Duration.zero);
+
+  /// 返回与当前实例具有相同值新实例，但作为参数传递给[copyWith]，任何重写除外
+  VeVodPlayerValue copyWith({
+    Duration? duration,
+    Size? size,
+    Duration? position,
+    Duration? buffered,
+    bool? isReadyToDisplay,
+    bool? isPlaying,
+    bool? isBuffering,
+    bool? isLooping,
+    bool? isLock,
+    bool? isFullScreen,
+    bool? isExceedsPreviewTime,
+    double? playbackSpeed,
+    bool? isPlaybackSpeed,
+    bool? isMaxPlaybackSpeed,
+    bool? isMuted,
+    TTVideoEngineResolutionType? resolution,
+    List<TTVideoEngineResolutionType>? resolutions,
+    bool clearDrag = false,
+    bool? isDragProgress,
+    Duration? dragDuration,
+    bool clearError = false,
+    TTError? error,
+    bool? isCompleted,
+  }) {
+    return VeVodPlayerValue(
+      duration: duration ?? this.duration,
+      size: size ?? this.size,
+      position: position ?? this.position,
+      buffered: buffered ?? this.buffered,
+      isReadyToDisplay: isReadyToDisplay ?? this.isReadyToDisplay,
+      isPlaying: isPlaying ?? this.isPlaying,
+      isBuffering: isBuffering ?? this.isBuffering,
+      isLooping: isLooping ?? this.isLooping,
+      isLock: isLock ?? this.isLock,
+      isFullScreen: isFullScreen ?? this.isFullScreen,
+      isExceedsPreviewTime: isExceedsPreviewTime ?? this.isExceedsPreviewTime,
+      playbackSpeed: playbackSpeed ?? this.playbackSpeed,
+      isPlaybackSpeed: isPlaybackSpeed ?? this.isPlaybackSpeed,
+      isMaxPlaybackSpeed: isMaxPlaybackSpeed ?? this.isMaxPlaybackSpeed,
+      isMuted: isMuted ?? this.isMuted,
+      resolution: resolution ?? this.resolution,
+      resolutions: resolutions ?? this.resolutions,
+      isDragVertical: !clearDrag && _isDragVertical,
+      dragVerticalType: _dragVerticalType,
+      dragVerticalValue: _dragVerticalValue,
+      isDragProgress: isDragProgress ?? this.isDragProgress,
+      dragDuration: dragDuration ?? this.dragDuration,
+      error: clearError ? null : error ?? this.error,
+      isCompleted: isCompleted ?? this.isCompleted,
+    );
+  }
+
+  /// 返回与当前实例具有相同值新实例，但作为参数传递给[copyWith]，任何重写除外
+  VeVodPlayerValue _copyWith({
+    bool? isDragVertical,
+    bool clearDragVerticalType = false,
+    DragVerticalType? dragVerticalType,
+    double? dragVerticalValue,
+  }) {
+    return VeVodPlayerValue(
+      duration: duration,
+      size: size,
+      position: position,
+      buffered: buffered,
+      isReadyToDisplay: isReadyToDisplay,
+      isPlaying: isPlaying,
+      isBuffering: isBuffering,
+      isLooping: isLooping,
+      isLock: isLock,
+      isFullScreen: isFullScreen,
+      isExceedsPreviewTime: isExceedsPreviewTime,
+      playbackSpeed: playbackSpeed,
+      isPlaybackSpeed: isPlaybackSpeed,
+      isMaxPlaybackSpeed: isMaxPlaybackSpeed,
+      isMuted: isMuted,
+      resolution: resolution,
+      resolutions: resolutions,
+      isDragVertical: isDragVertical ?? _isDragVertical,
+      dragVerticalType:
+          clearDragVerticalType ? null : dragVerticalType ?? _dragVerticalType,
+      dragVerticalValue: dragVerticalValue ?? _dragVerticalValue,
+      isDragProgress: isDragProgress,
+      dragDuration: dragDuration,
+      error: error,
+      isCompleted: isCompleted,
+    );
+  }
+}
+
+@immutable
+class _VeVodPlayerValue {
+  const _VeVodPlayerValue({
     required this.duration,
     this.size = Size.zero,
     this.position = Duration.zero,
@@ -22,20 +144,20 @@ class VeVodPlayerValue {
     this.playbackSpeed = 1.0,
     this.isPlaybackSpeed = false,
     this.isMaxPlaybackSpeed = false,
+    this.isMuted = false,
     this.resolution =
         TTVideoEngineResolutionType.TTVideoEngineResolutionTypeABRAuto,
     this.resolutions = const <TTVideoEngineResolutionType>[],
-    this.isDragVertical = false,
-    this.dragVerticalType,
-    this.dragVerticalValue = 0,
+    bool isDragVertical = false,
+    DragVerticalType? dragVerticalType,
+    double dragVerticalValue = 0,
     this.isDragProgress = false,
     this.dragDuration = Duration.zero,
     this.error,
     this.isCompleted = false,
-  });
-
-  /// 返回尚未加载的实例
-  const VeVodPlayerValue.uninitialized() : this(duration: Duration.zero);
+  })  : _isDragVertical = isDragVertical,
+        _dragVerticalType = dragVerticalType,
+        _dragVerticalValue = dragVerticalValue;
 
   /// 总时长
   ///
@@ -86,6 +208,9 @@ class VeVodPlayerValue {
   /// 是否以最大速率播放视频
   final bool isMaxPlaybackSpeed;
 
+  /// 是否静音
+  final bool isMuted;
+
   /// 当前清晰度
   final TTVideoEngineResolutionType resolution;
 
@@ -93,13 +218,13 @@ class VeVodPlayerValue {
   final List<TTVideoEngineResolutionType> resolutions;
 
   /// 是否正在调整显示亮度或音量
-  final bool isDragVertical;
+  final bool _isDragVertical;
 
   /// 调节音量或屏幕亮度
-  final DragVerticalType? dragVerticalType;
+  final DragVerticalType? _dragVerticalType;
 
   /// 亮度或音量
-  final double dragVerticalValue;
+  final double _dragVerticalValue;
 
   /// 是否正在调整播放进度
   final bool isDragProgress;
@@ -115,63 +240,6 @@ class VeVodPlayerValue {
   /// 如果发生变化或开始播放，则恢复为false
   /// 如果正在循环，则不会更新
   final bool isCompleted;
-
-  /// 返回与当前实例具有相同值新实例，但作为参数传递给[copyWith]，任何重写除外
-  VeVodPlayerValue copyWith({
-    Duration? duration,
-    Size? size,
-    Duration? position,
-    Duration? buffered,
-    bool? isReadyToDisplay,
-    bool? isPlaying,
-    bool? isBuffering,
-    bool? isLooping,
-    bool? isLock,
-    bool? isFullScreen,
-    bool? isExceedsPreviewTime,
-    double? playbackSpeed,
-    bool? isPlaybackSpeed,
-    bool? isMaxPlaybackSpeed,
-    TTVideoEngineResolutionType? resolution,
-    List<TTVideoEngineResolutionType>? resolutions,
-    bool? isDragVertical,
-    bool clearDragVerticalType = false,
-    DragVerticalType? dragVerticalType,
-    double? dragVerticalValue,
-    bool? isDragProgress,
-    Duration? dragDuration,
-    bool clearError = false,
-    TTError? error,
-    bool? isCompleted,
-  }) {
-    return VeVodPlayerValue(
-      duration: duration ?? this.duration,
-      size: size ?? this.size,
-      position: position ?? this.position,
-      buffered: buffered ?? this.buffered,
-      isReadyToDisplay: isReadyToDisplay ?? this.isReadyToDisplay,
-      isPlaying: isPlaying ?? this.isPlaying,
-      isBuffering: isBuffering ?? this.isBuffering,
-      isLooping: isLooping ?? this.isLooping,
-      isLock: isLock ?? this.isLock,
-      isFullScreen: isFullScreen ?? this.isFullScreen,
-      isExceedsPreviewTime: isExceedsPreviewTime ?? this.isExceedsPreviewTime,
-      playbackSpeed: playbackSpeed ?? this.playbackSpeed,
-      isPlaybackSpeed: isPlaybackSpeed ?? this.isPlaybackSpeed,
-      isMaxPlaybackSpeed: isMaxPlaybackSpeed ?? this.isMaxPlaybackSpeed,
-      resolution: resolution ?? this.resolution,
-      resolutions: resolutions ?? this.resolutions,
-      isDragVertical: isDragVertical ?? this.isDragVertical,
-      dragVerticalType: clearDragVerticalType
-          ? null
-          : dragVerticalType ?? this.dragVerticalType,
-      dragVerticalValue: dragVerticalValue ?? this.dragVerticalValue,
-      isDragProgress: isDragProgress ?? this.isDragProgress,
-      dragDuration: dragDuration ?? this.dragDuration,
-      error: clearError ? null : error ?? this.error,
-      isCompleted: isCompleted ?? this.isCompleted,
-    );
-  }
 
   /// 是否已加载并准备播放。
   bool get isInitialized => duration > Duration.zero;
@@ -220,7 +288,7 @@ class VeVodPlayerValue {
       !isBuffering &&
       !isExceedsPreviewTime &&
       !isPlaybackSpeed &&
-      !isDragVertical &&
+      !_isDragVertical &&
       !isDragProgress;
 
   /// 播放“完成” - 播放完成、存在异常、试看时间已过
@@ -245,7 +313,7 @@ class VeVodPlayerValue {
 
   /// 是否可以触发纵向滑动操作
   bool get _allowVerticalDrag =>
-      _allowPressed && !isCompleted && !isDragVertical;
+      _allowPressed && !isCompleted && !_isDragVertical;
 
   /// 是否可以触发横向滑动操作
   bool get _allowHorizontalDrag =>
@@ -272,11 +340,12 @@ class VeVodPlayerValue {
         'playbackSpeed: $playbackSpeed, '
         'isPlaybackSpeed: $isPlaybackSpeed, '
         'isMaxPlaybackSpeed: $isMaxPlaybackSpeed, '
+        'isMuted: $isMuted, '
         'resolution: $resolution, '
         'resolutions: $resolutions, '
-        'isDragVertical: $isDragVertical, '
-        'dragVerticalType: $dragVerticalType, '
-        'dragVerticalValue: $dragVerticalValue, '
+        'isDragVertical: $_isDragVertical, '
+        'dragVerticalType: $_dragVerticalType, '
+        'dragVerticalValue: $_dragVerticalValue, '
         'isDragProgress: $isDragProgress, '
         'dragDuration: $dragDuration, '
         'error: $error, '
@@ -303,11 +372,12 @@ class VeVodPlayerValue {
           playbackSpeed == other.playbackSpeed &&
           isPlaybackSpeed == other.isPlaybackSpeed &&
           isMaxPlaybackSpeed == other.isMaxPlaybackSpeed &&
+          isMuted == other.isMuted &&
           resolution == other.resolution &&
           resolutions == other.resolutions &&
-          isDragVertical == other.isDragVertical &&
-          dragVerticalType == other.dragVerticalType &&
-          dragVerticalValue == other.dragVerticalValue &&
+          _isDragVertical == other._isDragVertical &&
+          _dragVerticalType == other._dragVerticalType &&
+          _dragVerticalValue == other._dragVerticalValue &&
           isDragProgress == other.isDragProgress &&
           dragDuration == other.dragDuration &&
           error == other.error &&
@@ -325,8 +395,9 @@ class VeVodPlayerValue {
         isFullScreen,
         isExceedsPreviewTime,
         Object.hash(playbackSpeed, isPlaybackSpeed, isMaxPlaybackSpeed),
+        isMuted,
         Object.hash(resolution, resolutions),
-        Object.hash(isDragVertical, dragVerticalType, dragVerticalValue),
+        Object.hash(_isDragVertical, _dragVerticalType, _dragVerticalValue),
         Object.hash(isDragProgress, dragDuration),
         error,
         isCompleted,

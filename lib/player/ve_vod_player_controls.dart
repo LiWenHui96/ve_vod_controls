@@ -280,10 +280,10 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
       );
     }
 
-    if (value.isDragVertical) {
+    if (value._isDragVertical) {
       child = ControlsVertical(
-        value: value.dragVerticalValue,
-        type: value.dragVerticalType,
+        value: value._dragVerticalValue,
+        type: value._dragVerticalType,
       );
     }
 
@@ -364,23 +364,23 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
 
   /// 纵向滑动，调节音量/亮度调节
   void onVerticalDragUpdate(DragUpdateDetails details) {
-    if (!value.isDragVertical) return;
+    if (!value._isDragVertical) return;
 
-    double data = value.dragVerticalValue - (details.delta.dy / totalHeight);
+    double data = value._dragVerticalValue - (details.delta.dy / totalHeight);
     data = ui.clampDouble(data, 0, 1);
     controller._setDragVerticalValue(data);
 
     /// 实时改变
-    if (value.dragVerticalType == DragVerticalType.brightness) {
+    if (value._dragVerticalType == DragVerticalType.brightness) {
       controller.setBrightness(data);
-    } else if (value.dragVerticalType == DragVerticalType.volume) {
+    } else if (value._dragVerticalType == DragVerticalType.volume) {
       controller.setVolume(data);
     }
   }
 
   /// 纵向滑动结束，结束音量/亮度调节触发
   void onVerticalDragEnd(DragEndDetails details) {
-    if (!value.isDragVertical) return;
+    if (!value._isDragVertical) return;
     controller._setDragVertical(false);
   }
 
