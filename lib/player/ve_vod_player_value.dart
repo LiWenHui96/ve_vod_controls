@@ -25,6 +25,7 @@ class VeVodPlayerValue extends _VeVodPlayerValue {
     super.resolution,
     super.resolutions,
     super.isDragVertical,
+    super.isDragVerticalWithGesture,
     super.dragVerticalType,
     super.dragVerticalValue,
     super.isDragProgress,
@@ -81,6 +82,7 @@ class VeVodPlayerValue extends _VeVodPlayerValue {
       resolution: resolution ?? this.resolution,
       resolutions: resolutions ?? this.resolutions,
       isDragVertical: !clearDrag && _isDragVertical,
+      isDragVerticalWithGesture: !clearDrag && _isDragVerticalWithGesture,
       dragVerticalType: _dragVerticalType,
       dragVerticalValue: _dragVerticalValue,
       isDragProgress: isDragProgress ?? this.isDragProgress,
@@ -93,6 +95,7 @@ class VeVodPlayerValue extends _VeVodPlayerValue {
   /// 返回与当前实例具有相同值新实例，但作为参数传递给[copyWith]，任何重写除外
   VeVodPlayerValue _copyWith({
     bool? isDragVertical,
+    bool? isDragVerticalWithGesture,
     bool clearDragVerticalType = false,
     DragVerticalType? dragVerticalType,
     double? dragVerticalValue,
@@ -116,6 +119,8 @@ class VeVodPlayerValue extends _VeVodPlayerValue {
       resolution: resolution,
       resolutions: resolutions,
       isDragVertical: isDragVertical ?? _isDragVertical,
+      isDragVerticalWithGesture:
+          isDragVerticalWithGesture ?? _isDragVerticalWithGesture,
       dragVerticalType:
           clearDragVerticalType ? null : dragVerticalType ?? _dragVerticalType,
       dragVerticalValue: dragVerticalValue ?? _dragVerticalValue,
@@ -149,6 +154,7 @@ class _VeVodPlayerValue {
         TTVideoEngineResolutionType.TTVideoEngineResolutionTypeABRAuto,
     this.resolutions = const <TTVideoEngineResolutionType>[],
     bool isDragVertical = false,
+    bool isDragVerticalWithGesture = false,
     DragVerticalType? dragVerticalType,
     double dragVerticalValue = 0,
     this.isDragProgress = false,
@@ -156,6 +162,7 @@ class _VeVodPlayerValue {
     this.error,
     this.isCompleted = false,
   })  : _isDragVertical = isDragVertical,
+        _isDragVerticalWithGesture = isDragVerticalWithGesture,
         _dragVerticalType = dragVerticalType,
         _dragVerticalValue = dragVerticalValue;
 
@@ -219,6 +226,9 @@ class _VeVodPlayerValue {
 
   /// 是否正在调整显示亮度或音量
   final bool _isDragVertical;
+
+  /// 是否为手势调整显示亮度或音量
+  final bool _isDragVerticalWithGesture;
 
   /// 调节音量或屏幕亮度
   final DragVerticalType? _dragVerticalType;
@@ -313,7 +323,9 @@ class _VeVodPlayerValue {
 
   /// 是否可以触发纵向滑动操作
   bool get _allowVerticalDrag =>
-      _allowPressed && !isCompleted && !_isDragVertical;
+      _allowPressed &&
+      !isCompleted &&
+      (!_isDragVerticalWithGesture || !_isDragVertical);
 
   /// 是否可以触发横向滑动操作
   bool get _allowHorizontalDrag =>
@@ -344,6 +356,7 @@ class _VeVodPlayerValue {
         'resolution: $resolution, '
         'resolutions: $resolutions, '
         'isDragVertical: $_isDragVertical, '
+        'isDragVerticalWithGesture: $_isDragVerticalWithGesture, '
         'dragVerticalType: $_dragVerticalType, '
         'dragVerticalValue: $_dragVerticalValue, '
         'isDragProgress: $isDragProgress, '
@@ -376,6 +389,7 @@ class _VeVodPlayerValue {
           resolution == other.resolution &&
           resolutions == other.resolutions &&
           _isDragVertical == other._isDragVertical &&
+          _isDragVerticalWithGesture == other._isDragVerticalWithGesture &&
           _dragVerticalType == other._dragVerticalType &&
           _dragVerticalValue == other._dragVerticalValue &&
           isDragProgress == other.isDragProgress &&
@@ -397,7 +411,12 @@ class _VeVodPlayerValue {
         Object.hash(playbackSpeed, isPlaybackSpeed, isMaxPlaybackSpeed),
         isMuted,
         Object.hash(resolution, resolutions),
-        Object.hash(_isDragVertical, _dragVerticalType, _dragVerticalValue),
+        Object.hash(
+          _isDragVertical,
+          _isDragVerticalWithGesture,
+          _dragVerticalType,
+          _dragVerticalValue,
+        ),
         Object.hash(isDragProgress, dragDuration),
         error,
         isCompleted,

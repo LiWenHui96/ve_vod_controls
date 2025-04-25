@@ -40,6 +40,7 @@ class VeVodPlayerConfig {
     this.onOverlayBuilder,
     this.onPlaceholderBuilder,
     this.fullScreenAtStartUp = false,
+    this.mutedAtStartUp = false,
     this.orientationsEnterFullScreen,
     this.systemOverlaysExitFullScreen = SystemUiOverlay.values,
     this.orientationsExitFullScreen = DeviceOrientation.values,
@@ -102,6 +103,9 @@ class VeVodPlayerConfig {
 
   /// 是否在启动时开启全屏播放，默认为false
   final bool fullScreenAtStartUp;
+
+  /// 是否在启动时开启静音播放，默认为false
+  final bool mutedAtStartUp;
 
   /// 定义进入全屏时允许的设备方向
   final List<DeviceOrientation>? orientationsEnterFullScreen;

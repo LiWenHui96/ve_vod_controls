@@ -350,6 +350,9 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
       return;
     }
 
+    /// 取消定时器
+    if (!value._isDragVerticalWithGesture) controller._cancelVerticalTimer();
+
     final DragVerticalType type = details.globalPosition.dx < totalWidth / 2
         ? DragVerticalType.brightness
         : DragVerticalType.volume;
@@ -366,6 +369,9 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
   void onVerticalDragUpdate(DragUpdateDetails details) {
     if (!value._isDragVertical) return;
 
+    /// 取消定时器，避免频繁触发关闭操作
+    controller._cancelVerticalTimer();
+
     double data = value._dragVerticalValue - (details.delta.dy / totalHeight);
     data = ui.clampDouble(data, 0, 1);
     controller._setDragVerticalValue(data);
@@ -381,7 +387,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
   /// 纵向滑动结束，结束音量/亮度调节触发
   void onVerticalDragEnd(DragEndDetails details) {
     if (!value._isDragVertical) return;
-    controller._setDragVertical(false);
+    controller._closeDragVertical(duration: Durations.long2);
   }
 
   /// 横向滑动开始，触发播放进度调节

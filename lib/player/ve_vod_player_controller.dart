@@ -55,6 +55,9 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   /// 计时器
   Timer? _timer;
 
+  /// 音量/亮度显示计时器
+  Timer? _verticalTimer;
+
   /// 默认播放速度
   double _defaultPlaybackSpeed = 1;
   Timer? _playbackSpeedTimer;
@@ -108,6 +111,9 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
       /// 设置自定义标签
       if (config.subTag != null) _vodPlayer.setSubTag(config.subTag!),
+
+      /// 设置静音
+      if (config.mutedAtStartUp) setMuted(true),
     ]);
 
     if (config.autoInitialize || config.autoPlay) {
@@ -116,6 +122,9 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
       /// 若未开启自动播放，则在[_vodPlayer.onPrepared]方法内暂停播放
       await play();
     }
+
+    /// 开启系统音量变化监听
+    _addVolumeListener();
 
     /// 在启动时开启全屏播放
     if (config.fullScreenAtStartUp) addListener(_fullScreenListener);
@@ -293,6 +302,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
   /// 静音播放
   Future<void> setMuted(bool muted) async {
+    value = value.copyWith(isMuted: muted);
     await _vodPlayer.setMuted(muted);
   }
 
@@ -306,6 +316,32 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   Future<void> setVolume(double volume) async {
     volume = ui.clampDouble(volume, 0, 1);
     await _vodPlayer.setVolume(volume: TTVolume(left: volume, right: volume));
+  }
+
+  /// 系统音量变化监听
+  void _addVolumeListener() {
+    VolumeController.instance.addListener(
+      (double volume) {
+        if (value.isMuted) setMuted(false);
+
+        if (!value._isDragVerticalWithGesture) {
+          if (value._isDragVertical &&
+              value._dragVerticalType == DragVerticalType.volume) {
+            _setDragVerticalValue(volume);
+          } else if (!value._isDragVertical) {
+            _setDragVertical(
+              true,
+              isDragVerticalWithGesture: false,
+              type: DragVerticalType.volume,
+              currentValue: volume,
+            );
+          }
+
+          _closeDragVertical();
+        }
+      },
+      fetchInitialVolume: false,
+    );
   }
 
   /// 设置纯音频播放
@@ -342,6 +378,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   /// 设置是否正在调整显示亮度或音量
   void _setDragVertical(
     bool isDragVertical, {
+    bool isDragVerticalWithGesture = true,
     DragVerticalType? type,
     double? currentValue,
   }) {
@@ -349,6 +386,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
     value = value._copyWith(
       isDragVertical: isDragVertical,
+      isDragVerticalWithGesture: isDragVerticalWithGesture,
       clearDragVerticalType: !isDragVertical,
       dragVerticalType: type,
       dragVerticalValue: currentValue ?? 0,
@@ -358,6 +396,19 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   /// 设置当前值（亮度或音量）
   void _setDragVerticalValue(double dragVerticalValue) {
     value = value._copyWith(dragVerticalValue: dragVerticalValue);
+  }
+
+  /// 关闭调整显示亮度或音量
+  void _closeDragVertical({Duration duration = Durations.extralong4}) {
+    /// 注销计时器
+    _cancelVerticalTimer();
+
+    _verticalTimer = Timer.periodic(duration, (Timer timer) {
+      final bool flag = _handleVerticalTimer(timer);
+      if (flag) return;
+
+      _setDragVertical(false, isDragVerticalWithGesture: false);
+    });
   }
 
   /// 设置是否正在调整播放进度
@@ -654,6 +705,26 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     _timer = null;
   }
 
+  /// 处理[_verticalTimer]
+  bool _handleVerticalTimer(Timer timer) {
+    if (timer.isActive) {
+      timer.cancel();
+      _cancelVerticalTimer();
+    } else {
+      return true;
+    }
+    return false;
+  }
+
+  /// 注销[_verticalTimer]
+  void _cancelVerticalTimer() {
+    /// 当 `_verticalTimer` 存在，且处于活跃状态时，注销计时器
+    if (_verticalTimer != null && _verticalTimer!.isActive) {
+      _verticalTimer?.cancel();
+      _verticalTimer = null;
+    }
+  }
+
   /// 处理[_playbackSpeedTimer]
   bool _handlePlaybackSpeedTimer(Timer timer) {
     if (timer.isActive) {
@@ -693,10 +764,14 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
     /// 注销计时器
     _cancelTimer();
+    _cancelVerticalTimer();
     _cancelPlaybackSpeedTimer();
 
     /// 释放监听器
     _fullScreenStream.close();
+
+    /// 释放音量监听
+    VolumeController.instance.removeListener();
 
     /// 重置屏幕亮度
     _resetScreenBrightness();
