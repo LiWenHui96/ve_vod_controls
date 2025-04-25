@@ -1,3 +1,7 @@
+## 1.1.1
+
+* Add pub points.
+
 ## 1.1.0
 
 * Project rewriting；
