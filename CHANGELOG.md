@@ -1,3 +1,8 @@
+## 1.1.2
+
+* Add `mutedAtStartUp`.
+* Fix Bug.
+
 ## 1.1.1
 
 * Add pub points.
