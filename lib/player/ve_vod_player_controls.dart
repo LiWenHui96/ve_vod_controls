@@ -360,6 +360,9 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
     if (type == DragVerticalType.brightness) {
       currentValue = await controller.brightness;
     } else if (type == DragVerticalType.volume) {
+      /// 如果为静音状态，则解除静音
+      if (value.isMuted) await controller.setMuted(false);
+
       currentValue = await controller.volume;
     }
     controller._setDragVertical(true, type: type, currentValue: currentValue);
@@ -373,7 +376,7 @@ class _VeVodPlayerControlsState extends State<VeVodPlayerControls> {
     controller._cancelVerticalTimer();
 
     double data = value._dragVerticalValue - (details.delta.dy / totalHeight);
-    data = ui.clampDouble(data, 0, 1);
+    data = controller._getNumValue(ui.clampDouble(data, 0, 1));
     controller._setDragVerticalValue(data);
 
     /// 实时改变

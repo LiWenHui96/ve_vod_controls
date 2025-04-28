@@ -49,6 +49,9 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   /// 是否为首次初始化
   bool _isFirstInit = true;
 
+  /// 应用是否为挂起状态
+  bool _isAppInBackground = false;
+
   /// 本机视图类型，仅支持Android端
   NativeViewType _nativeViewType = NativeViewType.TextureView;
 
@@ -122,9 +125,6 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
       /// 若未开启自动播放，则在[_vodPlayer.onPrepared]方法内暂停播放
       await play();
     }
-
-    /// 开启系统音量变化监听
-    _addVolumeListener();
 
     /// 在启动时开启全屏播放
     if (config.fullScreenAtStartUp) addListener(_fullScreenListener);
@@ -306,10 +306,15 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     await _vodPlayer.setMuted(muted);
   }
 
+  /// 数字处理
+  double _getNumValue(double value) {
+    return double.tryParse(value.toStringAsFixed(5)) ?? 0;
+  }
+
   /// 获取当前音量，默认使用左声道
   Future<double> get volume async {
     final TTVolume? volume = await _vodPlayer.getVolume();
-    return volume?.left ?? 0;
+    return _getNumValue(volume?.left ?? 0);
   }
 
   /// 设置播放音量
@@ -322,6 +327,12 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   void _addVolumeListener() {
     VolumeController.instance.addListener(
       (double volume) {
+        if (_isAppInBackground) {
+          _isAppInBackground = false;
+          return;
+        }
+
+        volume = _getNumValue(volume);
         if (value.isMuted) setMuted(false);
 
         if (!value._isDragVerticalWithGesture) {
@@ -340,8 +351,13 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
           _closeDragVertical();
         }
       },
-      fetchInitialVolume: false,
+      fetchInitialVolume: _isAppInBackground,
     );
+  }
+
+  /// 移除系统音量监听
+  void _removeVolumeListener() {
+    VolumeController.instance.removeListener();
   }
 
   /// 设置纯音频播放
@@ -394,8 +410,8 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   }
 
   /// 设置当前值（亮度或音量）
-  void _setDragVerticalValue(double dragVerticalValue) {
-    value = value._copyWith(dragVerticalValue: dragVerticalValue);
+  void _setDragVerticalValue(double value) {
+    this.value = this.value._copyWith(dragVerticalValue: value);
   }
 
   /// 关闭调整显示亮度或音量
@@ -609,6 +625,9 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
         /// 完成初始化，即将开始播放。
         value = value.copyWith(clearError: true, isCompleted: false);
 
+        /// 开启系统音量变化监听
+        _addVolumeListener();
+
         /// 若仅开启自动初始化并且未开启自动播放，则暂停播放
         /// 否则无须暂停
         if (config.autoInitialize && !config.autoPlay && _isFirstInit) pause();
@@ -771,7 +790,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     _fullScreenStream.close();
 
     /// 释放音量监听
-    VolumeController.instance.removeListener();
+    _removeVolumeListener();
 
     /// 重置屏幕亮度
     _resetScreenBrightness();

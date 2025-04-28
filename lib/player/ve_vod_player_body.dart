@@ -62,24 +62,34 @@ class _VeVodPlayerBodyState extends State<VeVodPlayerBody>
 
   @override
   void didPushNext() {
-    if (!controller.value.isFullScreen && controller.value.isPlaying) {
-      controller.pause();
-      isAutoPlayVideo = true;
-    }
+    Future<void>.delayed(Durations.short4, () {
+      if (!controller.value.isFullScreen && controller.value.isPlaying) {
+        controller.pause();
+        isAutoPlayVideo = true;
+      }
+    });
 
     super.didPushNext();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.paused) {
-      controller.pause();
-    } else if (state == AppLifecycleState.resumed &&
-        !controller._isPauseByUser) {
-      controller._vodPlayer.forceDraw();
-      controller.play();
+    if (!isAutoPlayVideo) {
+      if (state == AppLifecycleState.hidden ||
+          state == AppLifecycleState.paused) {
+        controller
+          ..pause()
+          .._isAppInBackground = true;
+        if (Platform.isAndroid) controller._removeVolumeListener();
+      } else if (state == AppLifecycleState.resumed &&
+          !controller._isPauseByUser) {
+        controller._vodPlayer.forceDraw();
+        controller.play();
+        if (Platform.isAndroid) controller._addVolumeListener();
+      }
     }
+
+    super.didChangeAppLifecycleState(state);
   }
 
   @override
