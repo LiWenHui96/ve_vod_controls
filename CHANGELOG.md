@@ -1,3 +1,7 @@
+## 1.1.3
+
+* Fix Bug.
+
 ## 1.1.2
 
 * Add `mutedAtStartUp`.
