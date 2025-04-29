@@ -70,6 +70,13 @@ class _VeVodPlayerState extends State<VeVodPlayer> {
   }
 
   @override
+  void dispose() {
+    controller.dispose();
+
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final TTVideoPlayerView vodPlayerView = TTVideoPlayerView(
       key: Key('Ve_Vod_Player_${controller.hashCode}'),

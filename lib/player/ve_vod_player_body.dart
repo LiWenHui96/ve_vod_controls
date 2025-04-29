@@ -52,9 +52,17 @@ class _VeVodPlayerBodyState extends State<VeVodPlayerBody>
 
   @override
   void didPopNext() {
-    if (isAutoPlayVideo && !controller.value.isPlaying) {
-      controller.play();
-      isAutoPlayVideo = false;
+    final bool isCurrent = ModalRoute.isCurrentOf(context) ?? false;
+    if (isCurrent) {
+      Future<void>.delayed(Durations.short4, () {
+        final bool isCurrent =
+            mounted && (ModalRoute.isCurrentOf(context) ?? false);
+
+        if (isCurrent && isAutoPlayVideo && !controller.value.isPlaying) {
+          controller.play();
+          isAutoPlayVideo = false;
+        }
+      });
     }
 
     super.didPopNext();
@@ -62,28 +70,20 @@ class _VeVodPlayerBodyState extends State<VeVodPlayerBody>
 
   @override
   void didPushNext() {
-    Future<void>.delayed(Durations.short4, () {
-      if (!controller.value.isFullScreen && controller.value.isPlaying) {
-        controller.pause();
-        isAutoPlayVideo = true;
-      }
-    });
+    if (!controller.value.isFullScreen && controller.value.isPlaying) {
+      controller.pause();
+      isAutoPlayVideo = true;
+    }
 
     super.didPushNext();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    /// 处理音量监听功能
     if (state == AppLifecycleState.paused) {
-      controller
-        ..pause()
-        .._isAppInBackground = true;
-      if (Platform.isAndroid) controller._removeVolumeListener();
-    } else if (state == AppLifecycleState.resumed &&
-        !controller._isPauseByUser &&
-        !isAutoPlayVideo) {
-      controller._vodPlayer.forceDraw();
-      controller.play();
+      controller._isAppInBackground = true;
+    } else if (state == AppLifecycleState.resumed) {
       if (Platform.isAndroid) controller._addVolumeListener();
     }
 

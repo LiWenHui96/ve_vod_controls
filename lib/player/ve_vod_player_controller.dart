@@ -325,7 +325,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
   /// 系统音量变化监听
   void _addVolumeListener() {
-    VolumeController.instance.addListener(
+    VeVodVolumeFactory.instance.addListener(
       (double volume) {
         if (_isAppInBackground) {
           _isAppInBackground = false;
@@ -353,11 +353,6 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
       },
       fetchInitialVolume: _isAppInBackground,
     );
-  }
-
-  /// 移除系统音量监听
-  void _removeVolumeListener() {
-    VolumeController.instance.removeListener();
   }
 
   /// 设置纯音频播放
@@ -789,8 +784,8 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     /// 释放监听器
     _fullScreenStream.close();
 
-    /// 释放音量监听
-    _removeVolumeListener();
+    /// 移除系统音量监听
+    VeVodVolumeFactory.instance.removeListener();
 
     /// 重置屏幕亮度
     _resetScreenBrightness();
@@ -799,5 +794,37 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     if (!config.allowedScreenSleep) WakelockPlus.disable();
 
     super.dispose();
+  }
+}
+
+class VeVodVolumeFactory {
+  VeVodVolumeFactory._();
+
+  static final VeVodVolumeFactory _instance = VeVodVolumeFactory._();
+
+  static VeVodVolumeFactory get instance => _instance;
+
+  int _listenerCount = 0;
+
+  void addListener(
+    ValueChanged<double> onData, {
+    bool fetchInitialVolume = true,
+  }) {
+    _listenerCount++;
+
+    /// 创建监听器
+    if (_listenerCount == 1) {
+      VolumeController.instance.addListener(
+        onData,
+        fetchInitialVolume: fetchInitialVolume,
+      );
+    }
+  }
+
+  void removeListener() {
+    _listenerCount--;
+
+    /// 注销监听器
+    if (_listenerCount <= 0) VolumeController.instance.removeListener();
   }
 }
