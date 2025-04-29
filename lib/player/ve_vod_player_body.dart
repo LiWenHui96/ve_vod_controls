@@ -87,6 +87,18 @@ class _VeVodPlayerBodyState extends State<VeVodPlayerBody>
       if (Platform.isAndroid) controller._addVolumeListener();
     }
 
+    if (state == AppLifecycleState.detached) {
+      controller.dispose();
+    } else if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
+      controller.pause();
+    } else if (state == AppLifecycleState.resumed &&
+        !controller._isPauseByUser &&
+        !isAutoPlayVideo) {
+      controller._vodPlayer.forceDraw();
+      controller.play();
+    }
+
     super.didChangeAppLifecycleState(state);
   }
 
