@@ -1,3 +1,7 @@
+## 1.1.6
+
+* Fix Bug.
+
 ## 1.1.5
 
 * Fix Bug.
@@ -15,7 +19,8 @@
 
 * Project rewriting；
 * The version of Flutter has been updated to `3.24.0`；
-* Full-screen conversion no longer uses the jump page method, but hides other components of the same page. Developers need to use `VeVodPlayerConfig.onFullScreenChanged` to handle it by themselves；
+* Full-screen conversion no longer uses the jump page method, but hides other components of the same
+  page. Developers need to use `VeVodPlayerConfig.onFullScreenChanged` to handle it by themselves；
 * Fix the error caused by the start position exceeding the playback time.
 * Fix known problems.
 
