@@ -81,7 +81,9 @@ class _VeVodPlayerState extends State<VeVodPlayer> {
     final TTVideoPlayerView vodPlayerView = TTVideoPlayerView(
       key: Key('Ve_Vod_Player_${controller.hashCode}'),
       nativeViewType: controller._nativeViewType,
-      onPlatformViewCreated: controller._init,
+      onPlatformViewCreated: (int viewId) {
+        controller._init(viewId, context: context);
+      },
     );
 
     return ColoredBox(

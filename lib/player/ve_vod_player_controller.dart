@@ -52,6 +52,9 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   /// 应用是否为挂起状态
   bool _isAppInBackground = false;
 
+  /// 上下文
+  BuildContext? _context;
+
   /// 本机视图类型，仅支持Android端
   NativeViewType _nativeViewType = NativeViewType.TextureView;
 
@@ -132,9 +135,12 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
 
   /// 执行初始化[TTVideoPlayerView]操作
   /// 设置[viewId]
-  Future<void> _init(int viewId) async {
+  Future<void> _init(int viewId, {BuildContext? context}) async {
     await _initVodPlayer();
     await _vodPlayer.setPlayerContainerView(viewId);
+
+    /// 赋值上下文
+    _context = context;
   }
 
   /// 播放
@@ -156,6 +162,12 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   /// 停止
   Future<void> stop() async {
     await _vodPlayer.stop();
+  }
+
+  /// 重播
+  Future<void> replay() async {
+    _setIsCompleted(false);
+    await play();
   }
 
   /// 将起播位置设置为[moment]
@@ -326,7 +338,15 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
   /// 系统音量变化监听
   void _addVolumeListener() {
     VeVodVolumeFactory.instance.addListener(
-      (double volume) {
+      key: hashCode,
+      onData: (double volume) {
+        final BuildContext? context = _context;
+        final bool isCurrent =
+            context != null && (ModalRoute.of(context)?.isCurrent ?? false);
+        if (!isCurrent) {
+          return;
+        }
+
         if (_isAppInBackground) {
           _isAppInBackground = false;
           return;
@@ -785,7 +805,7 @@ class VeVodPlayerController extends ValueNotifier<VeVodPlayerValue> {
     _fullScreenStream.close();
 
     /// 移除系统音量监听
-    VeVodVolumeFactory.instance.removeListener();
+    VeVodVolumeFactory.instance.removeListener(key: hashCode);
 
     /// 重置屏幕亮度
     _resetScreenBrightness();
@@ -806,25 +826,48 @@ class VeVodVolumeFactory {
 
   int _listenerCount = 0;
 
-  void addListener(
-    ValueChanged<double> onData, {
+  final Map<int, ValueChanged<double>> _listeners =
+      <int, ValueChanged<double>>{};
+
+  void addListener({
+    required int key,
+    required ValueChanged<double> onData,
     bool fetchInitialVolume = true,
   }) {
-    _listenerCount++;
+    /// 添加监听器
+    if (!_listeners.containsKey(key)) {
+      _listenerCount++;
+      _listeners[key] = onData;
+    } else {
+      _listeners[key] = onData;
+    }
 
     /// 创建监听器
     if (_listenerCount == 1) {
       VolumeController.instance.addListener(
-        onData,
+        (double volume) {
+          _listeners.forEach((int key, ValueChanged<double> listener) {
+            listener(volume);
+          });
+        },
         fetchInitialVolume: fetchInitialVolume,
       );
+    } else if (fetchInitialVolume) {
+      VolumeController.instance.getVolume().then((double volume) {
+        onData.call(volume);
+      });
     }
   }
 
-  void removeListener() {
+  void removeListener({int? key}) {
     _listenerCount--;
 
     /// 注销监听器
-    if (_listenerCount <= 0) VolumeController.instance.removeListener();
+    if (_listenerCount <= 0) {
+      VolumeController.instance.removeListener();
+      _listeners.clear();
+    } else {
+      _listeners.remove(key);
+    }
   }
 }
